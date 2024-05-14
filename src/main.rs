@@ -1,67 +1,43 @@
-use windows::{
-    core::*, Win32::Foundation::*, Win32::Graphics::Gdi::ValidateRect,
-    Win32::System::LibraryLoader::GetModuleHandleA, Win32::UI::WindowsAndMessaging::*,
+use winit::{
+    application::ApplicationHandler,
+    event::WindowEvent,
+    event_loop::{ActiveEventLoop, ControlFlow, EventLoop},
+    window::{Window, WindowId},
 };
 
-fn main() -> Result<()> {
-    unsafe {
-        let instance = GetModuleHandleA(None)?;
-        debug_assert!(instance.0 != 0);
+#[derive(Default)]
+struct App {
+    window: Option<Window>,
+}
 
-        let window_class = s!("window");
-
-        let wc = WNDCLASSA {
-            hCursor: LoadCursorW(None, IDC_ARROW)?,
-            hInstance: instance.into(),
-            lpszClassName: window_class,
-
-            style: CS_HREDRAW | CS_VREDRAW,
-            lpfnWndProc: Some(wndproc),
-            ..Default::default()
-        };
-
-        let atom = RegisterClassA(&wc);
-        debug_assert!(atom != 0);
-
-        CreateWindowExA(
-            WINDOW_EX_STYLE::default(),
-            window_class,
-            s!("This is a sample window"),
-            WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            CW_USEDEFAULT,
-            CW_USEDEFAULT,
-            CW_USEDEFAULT,
-            CW_USEDEFAULT,
-            None,
-            None,
-            instance,
-            None,
-        );
-
-        let mut message = MSG::default();
-
-        while GetMessageA(&mut message, None, 0, 0).into() {
-            DispatchMessageA(&message);
+impl ApplicationHandler for App {
+    fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
+        // This will probably need to be a match after the app grows a bit
+        if event == WindowEvent::CloseRequested {
+            event_loop.exit();
         }
-
-        Ok(())
+    }
+    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+        self.window = Some(
+            event_loop
+                .create_window(Window::default_attributes())
+                .unwrap(),
+        );
     }
 }
 
-extern "system" fn wndproc(window: HWND, message: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
-    unsafe {
-        match message {
-            WM_PAINT => {
-                println!("WM_PAINT");
-                _ = ValidateRect(window, None);
-                LRESULT(0)
-            }
-            WM_DESTROY => {
-                println!("WM_DESTROY");
-                PostQuitMessage(0);
-                LRESULT(0)
-            }
-            _ => DefWindowProcA(window, message, wparam, lparam),
-        }
-    }
+// TODO: This and the App struct should probably be abstracted to their own crate at some point
+pub fn create_and_run_window() {
+    let event_loop = EventLoop::new().unwrap();
+
+    // ControlFlow::Poll continuously runs the event loop, even if the OS hasn't
+    // dispatched any events. This is ideal for games and similar applications.
+    event_loop.set_control_flow(ControlFlow::Poll);
+
+    let mut app = App::default();
+    let _ = event_loop.run_app(&mut app);
+}
+
+pub fn main() {
+    create_and_run_window();
 }
