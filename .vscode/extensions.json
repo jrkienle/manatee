@@ -1,0 +1,7 @@
+{
+  "recommendations": [
+    "github.vscode-github-actions", // Only recommended if you plan on modifying on CI pipeline
+    "rust-lang.rust-analyzer", // Essentially required
+    "streetsidesoftware.code-spell-checker" // This has saved me more times than I can count
+  ]
+}
