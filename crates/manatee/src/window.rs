@@ -26,12 +26,11 @@ impl ApplicationHandler for App {
     }
 }
 
-// TODO: This and the App struct should probably be abstracted to their own crate at some point
 pub fn create_and_run_window() {
     let event_loop = EventLoop::new().unwrap();
 
     // ControlFlow::Poll continuously runs the event loop, even if the OS hasn't
-    // dispatched any events. This is ideal for games and similar applications.
+    // dispatched any events. This is ideal for a game engine
     event_loop.set_control_flow(ControlFlow::Poll);
 
     let mut app = App::default();
