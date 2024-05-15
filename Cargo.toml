@@ -1,7 +1,13 @@
 [package]
-name = "manatee"
+name = "manatee_editor"
+description = "A GUI for creating games with the Manatee engine"
 version = "0.0.1"
 edition = "2021"
 
+[workspace]
+members = [
+  "crates/manatee",
+]
+
 [dependencies]
-winit = "0.30.0"
+manatee = { path = "./crates/manatee" }
