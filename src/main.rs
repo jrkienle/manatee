@@ -1,6 +1,8 @@
 #![windows_subsystem = "windows"]
-pub use manatee::window::create_and_run_window;
+pub use manatee::window::{WindowEventLoop, WindowEventLoopManager};
 
 pub fn main() {
-    create_and_run_window();
+    let mut window_event_loop = WindowEventLoop::default();
+    window_event_loop.start_event_loop();
+    // window_event_loop.create_window();
 }
