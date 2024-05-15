@@ -1,3 +1,13 @@
 {
-    "rust-analyzer.check.command": "clippy"
+  "rust-analyzer.check.command": "clippy",
+  "cSpell.customDictionaries": {
+    "custom-dictionary-workspace": {
+      "name": "custom-dictionary-workspace",
+      "path": "${workspaceFolder:manatee}/.cspell/custom-dictionary-workspace.txt",
+      "addWords": true,
+      "scope": "workspace"
+    }
+  },
+  "cSpell.ignorePaths": [".vscode", "Cargo.lock", "Cargo.toml"],
+  "cSpell.words": ["Kienle", "winit"]
 }
