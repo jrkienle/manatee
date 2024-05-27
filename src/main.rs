@@ -1,9 +1,10 @@
-#![windows_subsystem = "windows"]
+// #![windows_subsystem = "windows"]
 
-pub use manatee::game::Game;
+pub use manatee::{game::Game, scene::Scene};
 
 pub fn main() {
-    Game::default().start(|| {
-        print!("Does this even work?");
-    });
+    let mut game = Game::new();
+    let test_scene = Scene {};
+    game.load_scene(test_scene);
+    game.run();
 }
