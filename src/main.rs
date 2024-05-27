@@ -1,10 +1,11 @@
-// #![windows_subsystem = "windows"]
+#![cfg_attr(
+    all(target_os = "windows", not(debug_assertions),),
+    windows_subsystem = "windows"
+)]
 
-pub use manatee::{game::Game, scene::Scene};
+pub use manatee::game::Game;
 
 pub fn main() {
-    let mut game = Game::new();
-    let test_scene = Scene {};
-    game.load_scene(test_scene);
+    let game = Game::new();
     game.run();
 }
