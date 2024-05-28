@@ -1,4 +1,7 @@
 {
   "cSpell.words": ["cgmath", "kienle", "wgpu", "winit"],
-  "rust-analyzer.check.command": "clippy"
+  "rust-analyzer.check.command": "clippy",
+  "[rust]": {
+    "editor.tabSize": 4
+  }
 }
