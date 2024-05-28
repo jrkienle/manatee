@@ -1,4 +1,8 @@
-pub struct SceneManager {}
+use crate::scene::Scene;
+
+pub struct SceneManager {
+    active_scene: Option<Scene>,
+}
 
 impl Default for SceneManager {
     fn default() -> Self {
@@ -8,6 +12,16 @@ impl Default for SceneManager {
 
 impl SceneManager {
     pub fn new() -> Self {
-        Self {}
+        Self { active_scene: None }
+    }
+
+    pub fn active_scene(&mut self) -> &Scene {
+        self.active_scene.as_ref().expect(
+            "No scene loaded. You must call game.load_scene() before game.run can be called",
+        )
+    }
+
+    pub fn load_scene(&mut self, scene: Scene) {
+        self.active_scene = Some(scene);
     }
 }

@@ -9,16 +9,25 @@ use winit::{
     window::{Window, WindowId},
 };
 
-use crate::gpu::Gpu;
+use crate::{gpu::Gpu, scene_manager::SceneManager};
 
 pub struct WindowState {
     gpu: Option<Arc<Gpu>>,
+    scene_manager: SceneManager,
     window: Option<Arc<Window>>,
 }
 
 impl WindowState {
-    pub fn new(window: Option<Arc<Window>>, gpu: Option<Arc<Gpu>>) -> Self {
-        Self { gpu, window }
+    pub fn new(
+        window: Option<Arc<Window>>,
+        gpu: Option<Arc<Gpu>>,
+        scene_manager: SceneManager,
+    ) -> Self {
+        Self {
+            gpu,
+            scene_manager,
+            window,
+        }
     }
 }
 
@@ -57,6 +66,7 @@ impl ApplicationHandler for WindowState {
                 event_loop.exit();
             }
             WindowEvent::RedrawRequested => {
+                let _active_scene = self.scene_manager.active_scene();
                 self.gpu.as_ref().unwrap().render_frame();
                 // Once I've rendered the frame, this exact event gets kicked off again to create
                 // an infinite game loop!

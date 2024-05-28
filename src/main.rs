@@ -3,9 +3,11 @@
     windows_subsystem = "windows"
 )]
 
-pub use manatee::game::Game;
+use manatee::{game::Game, scene::Scene};
 
 pub fn main() {
-    let game = Game::new();
+    let mut game = Game::new();
+    let editor_scene = Scene::new();
+    game.load_scene(editor_scene);
     game.run();
 }
