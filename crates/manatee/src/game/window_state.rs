@@ -9,7 +9,8 @@ use winit::{
     window::{Window, WindowId},
 };
 
-use crate::{gpu::Gpu, scene_manager::SceneManager};
+use super::Gpu;
+use super::SceneManager;
 
 pub struct WindowState {
     gpu: Option<Arc<Gpu>>,

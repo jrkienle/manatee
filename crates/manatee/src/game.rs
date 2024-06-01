@@ -1,8 +1,16 @@
+mod game_mode;
+mod gpu;
+mod window_state;
+
 use std::sync::Arc;
 
 use winit::{event_loop::EventLoop, window::Window};
 
-use crate::{gpu::Gpu, scene::Scene, scene_manager::SceneManager, window_state::WindowState};
+use crate::{scene::Scene, scene::SceneManager};
+
+pub use game_mode::GameMode;
+pub use gpu::Gpu;
+pub use window_state::WindowState;
 
 pub struct Game {
     event_loop: EventLoop<()>,
