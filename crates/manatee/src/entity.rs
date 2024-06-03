@@ -4,14 +4,12 @@ pub use entity_manager::EntityManager;
 use crate::component::Component;
 
 pub struct Entity {
-    // components: Vec<Component>,
-    name: &'static str,
+    pub(crate) id: u32,
 }
 
 impl Entity {
-    pub fn new(name: &'static str) -> Self {
-        println!("Created Entity: {name}!");
-        Self { name }
+    pub fn new(id: u32) -> Self {
+        Self { id }
     }
 
     pub fn add_component<C: Component>(&self, _component: &mut C) {

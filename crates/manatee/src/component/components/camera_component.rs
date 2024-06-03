@@ -8,7 +8,9 @@ impl CameraComponent {
     }
 }
 
-impl Component for CameraComponent {}
+impl Component for CameraComponent {
+    // const TYPE_NAME: &'static str = "CameraComponent";
+}
 
 impl Default for CameraComponent {
     fn default() -> Self {
