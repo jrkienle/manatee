@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{borrow::BorrowMut, sync::Arc};
 
 use cgmath::Vector2;
 use pollster::block_on;
@@ -9,13 +9,14 @@ use winit::{
     window::{Window, WindowId},
 };
 
+use super::Context;
 use super::Gpu;
 use super::SceneManager;
 
 pub struct WindowState {
-    gpu: Option<Arc<Gpu>>,
-    scene_manager: SceneManager,
-    window: Option<Arc<Window>>,
+    pub(crate) gpu: Option<Arc<Gpu>>,
+    pub(crate) scene_manager: SceneManager,
+    pub(crate) window: Option<Arc<Window>>,
 }
 
 impl WindowState {
@@ -67,8 +68,16 @@ impl ApplicationHandler for WindowState {
                 event_loop.exit();
             }
             WindowEvent::RedrawRequested => {
-                let _active_scene = self.scene_manager.active_scene();
-                self.gpu.as_ref().unwrap().render_frame();
+                let (systems, mut ctx) = Context::new(self);
+
+                for (_, system) in systems.systems.iter_mut() {
+                    system.get_mut().on_update(&mut ctx);
+                }
+
+                // for (_, system) in ctx() {
+                //     let _foo = &mut system.get_mut().on_update(&mut ctx);
+                // }
+                // self.gpu.as_ref().unwrap().render_frame();
                 // Once I've rendered the frame, this exact event gets kicked off again to create
                 // an infinite game loop!
                 self.window.as_ref().unwrap().request_redraw();

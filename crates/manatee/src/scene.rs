@@ -1,14 +1,14 @@
 mod scene_manager;
 pub use scene_manager::SceneManager;
 
-use crate::component::{Component, ComponentManager};
-use crate::entity::{Entity, EntityManager};
-use crate::system::{System, SystemManager};
+use crate::ecs::{Component, ComponentManager};
+use crate::ecs::{Entity, EntityManager};
+use crate::ecs::{System, SystemManager};
 
 pub struct Scene {
-    component_manager: ComponentManager,
-    entity_manager: EntityManager,
-    system_manager: SystemManager,
+    pub(crate) components: ComponentManager,
+    pub(crate) entities: EntityManager,
+    pub(crate) systems: SystemManager,
 }
 
 impl Default for Scene {
@@ -20,16 +20,19 @@ impl Default for Scene {
 impl Scene {
     pub fn new() -> Self {
         Self {
-            component_manager: ComponentManager::new(),
-            entity_manager: EntityManager::new(),
-            system_manager: SystemManager::new(),
+            components: ComponentManager::new(),
+            entities: EntityManager::new(),
+            systems: SystemManager::new(),
         }
     }
 
     pub fn spawn<C: Component>(&mut self, component: C) -> &Entity {
-        let entity = self.entity_manager.add();
-        self.component_manager
-            .add_component_to_entity(component, entity);
+        let entity = self.entities.add();
+        self.components.add_component_to_entity(component, entity);
         entity
+    }
+
+    pub fn register_system<S: System>(&mut self, system: S) {
+        self.systems.register_system(system);
     }
 }

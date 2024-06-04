@@ -1,3 +1,4 @@
+mod context;
 mod game_mode;
 mod gpu;
 mod window_state;
@@ -8,6 +9,7 @@ use winit::{event_loop::EventLoop, window::Window};
 
 use crate::{scene::Scene, scene::SceneManager};
 
+pub use context::Context;
 pub use game_mode::GameMode;
 pub use gpu::Gpu;
 pub use window_state::WindowState;

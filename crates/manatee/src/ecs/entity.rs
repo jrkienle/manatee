@@ -1,7 +1,4 @@
-mod entity_manager;
-pub use entity_manager::EntityManager;
-
-use crate::component::Component;
+use super::Component;
 
 pub struct Entity {
     pub(crate) id: u32,

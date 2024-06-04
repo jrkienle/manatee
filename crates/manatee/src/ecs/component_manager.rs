@@ -1,10 +1,6 @@
-use super::Component;
-use crate::entity::Entity;
+use super::{Component, Entity};
 use hashbrown::HashMap;
-use std::{
-    any::Any,
-    cell::{Ref, RefCell, RefMut},
-};
+use std::cell::RefCell;
 
 pub struct ComponentManager {
     pub(crate) components: HashMap<String, HashMap<u32, Box<RefCell<dyn Component>>>>,

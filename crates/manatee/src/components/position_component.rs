@@ -1,4 +1,4 @@
-use crate::component::Component;
+use crate::ecs::Component;
 use cgmath::Vector3;
 
 pub struct PositionComponent {
