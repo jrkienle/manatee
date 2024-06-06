@@ -1,4 +1,4 @@
-use std::{borrow::BorrowMut, sync::Arc};
+use std::sync::Arc;
 
 use cgmath::Vector2;
 use pollster::block_on;
@@ -14,21 +14,19 @@ use super::Gpu;
 use super::SceneManager;
 
 pub struct WindowState {
+    pub active_scene_id: u32,
     pub(crate) gpu: Option<Arc<Gpu>>,
     pub(crate) scene_manager: SceneManager,
     pub(crate) window: Option<Arc<Window>>,
 }
 
 impl WindowState {
-    pub fn new(
-        window: Option<Arc<Window>>,
-        gpu: Option<Arc<Gpu>>,
-        scene_manager: SceneManager,
-    ) -> Self {
+    pub fn new() -> Self {
         Self {
-            gpu,
-            scene_manager,
-            window,
+            active_scene_id: 0,
+            gpu: None,
+            scene_manager: SceneManager::new(),
+            window: None,
         }
     }
 }
@@ -68,11 +66,11 @@ impl ApplicationHandler for WindowState {
                 event_loop.exit();
             }
             WindowEvent::RedrawRequested => {
-                let (systems, mut ctx) = Context::new(self);
+                // let (systems, mut ctx) = Context::new(self);
 
-                for (_, system) in systems.systems.iter_mut() {
-                    system.get_mut().on_update(&mut ctx);
-                }
+                // for (_, system) in systems.systems.iter_mut() {
+                //     system.get_mut().on_update(&mut ctx);
+                // }
 
                 // for (_, system) in ctx() {
                 //     let _foo = &mut system.get_mut().on_update(&mut ctx);
