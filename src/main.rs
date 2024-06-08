@@ -9,7 +9,7 @@ pub fn main() {
     let mut game = Game::new();
     let mut editor_scene = Scene::new();
 
-    editor_scene.spawn(components::PositionComponent::new(0.0, 0.0, 0.0));
+    editor_scene.spawn(components::CameraComponent::new());
     editor_scene.register_system(systems::CameraSystem::new());
 
     game.load_scene(editor_scene);

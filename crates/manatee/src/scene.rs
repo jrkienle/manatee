@@ -1,9 +1,12 @@
+use std::{iter::once, sync::Arc};
+
 mod scene_manager;
 pub use scene_manager::SceneManager;
 
 use crate::ecs::{Component, ComponentManager};
 use crate::ecs::{Entity, EntityManager};
 use crate::ecs::{System, SystemManager};
+use crate::game::{Context, Gpu, RenderTarget};
 
 pub struct Scene {
     pub(crate) components: ComponentManager,
@@ -24,6 +27,23 @@ impl Scene {
             entities: EntityManager::new(),
             systems: SystemManager::new(),
         }
+    }
+
+    pub fn render(&mut self, gpu: Arc<Gpu>) {
+        let mut render_target = RenderTarget::new(gpu.clone());
+        let mut ctx = Context {
+            components: &mut self.components,
+            entities: &mut self.entities,
+            gpu,
+            render_target: &mut render_target,
+        };
+
+        for (_, system) in self.systems.systems.iter_mut() {
+            system.get_mut().on_update(&mut ctx);
+        }
+
+        ctx.gpu.queue.submit(once(render_target.encoder.finish()));
+        render_target.surface_texture.present();
     }
 
     pub fn spawn<C: Component>(&mut self, component: C) -> &Entity {

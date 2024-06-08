@@ -9,12 +9,10 @@ use winit::{
     window::{Window, WindowId},
 };
 
-use super::Context;
 use super::Gpu;
 use super::SceneManager;
 
 pub struct WindowState {
-    pub active_scene_id: u32,
     pub(crate) gpu: Option<Arc<Gpu>>,
     pub(crate) scene_manager: SceneManager,
     pub(crate) window: Option<Arc<Window>>,
@@ -23,7 +21,6 @@ pub struct WindowState {
 impl WindowState {
     pub fn new() -> Self {
         Self {
-            active_scene_id: 0,
             gpu: None,
             scene_manager: SceneManager::new(),
             window: None,
@@ -67,6 +64,12 @@ impl ApplicationHandler for WindowState {
             }
             WindowEvent::RedrawRequested => {
                 // let (systems, mut ctx) = Context::new(self);
+                let gpu = self.gpu.clone().unwrap();
+                self.scene_manager
+                    .active_scene
+                    .as_mut()
+                    .unwrap()
+                    .render(gpu);
 
                 // for (_, system) in systems.systems.iter_mut() {
                 //     system.get_mut().on_update(&mut ctx);

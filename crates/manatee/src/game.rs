@@ -1,6 +1,7 @@
 mod context;
 mod game_mode;
 mod gpu;
+mod render_target;
 mod window_state;
 
 use winit::event_loop::EventLoop;
@@ -10,6 +11,7 @@ use crate::{scene::Scene, scene::SceneManager};
 pub use context::Context;
 pub use game_mode::GameMode;
 pub use gpu::Gpu;
+pub use render_target::RenderTarget;
 pub use window_state::WindowState;
 
 pub struct Game {
