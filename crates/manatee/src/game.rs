@@ -1,28 +1,20 @@
+mod asset;
 mod context;
 mod game_mode;
-mod gpu;
-mod render_target;
 mod window_state;
 
 use winit::event_loop::EventLoop;
 
 use crate::{scene::Scene, scene::SceneManager};
 
+pub use asset::Asset;
 pub use context::Context;
 pub use game_mode::GameMode;
-pub use gpu::Gpu;
-pub use render_target::RenderTarget;
 pub use window_state::WindowState;
 
 pub struct Game {
     event_loop: EventLoop<()>,
     window_state: WindowState,
-}
-
-impl Default for Game {
-    fn default() -> Self {
-        Self::new()
-    }
 }
 
 impl Game {
@@ -41,5 +33,11 @@ impl Game {
 
     pub fn run(mut self) {
         self.event_loop.run_app(&mut self.window_state).unwrap();
+    }
+}
+
+impl Default for Game {
+    fn default() -> Self {
+        Self::new()
     }
 }

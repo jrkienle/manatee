@@ -6,18 +6,13 @@ pub use scene_manager::SceneManager;
 use crate::ecs::{Component, ComponentManager};
 use crate::ecs::{Entity, EntityManager};
 use crate::ecs::{System, SystemManager};
-use crate::game::{Context, Gpu, RenderTarget};
+use crate::game::Context;
+use crate::graphics::{Gpu, RenderTarget};
 
 pub struct Scene {
     pub(crate) components: ComponentManager,
     pub(crate) entities: EntityManager,
     pub(crate) systems: SystemManager,
-}
-
-impl Default for Scene {
-    fn default() -> Self {
-        Scene::new()
-    }
 }
 
 impl Scene {
@@ -39,7 +34,7 @@ impl Scene {
         };
 
         for (_, system) in self.systems.systems.iter_mut() {
-            system.get_mut().on_update(&mut ctx);
+            system.on_update(&mut ctx);
         }
 
         ctx.gpu.queue.submit(once(render_target.encoder.finish()));
@@ -54,5 +49,11 @@ impl Scene {
 
     pub fn register_system<S: System>(&mut self, system: S) {
         self.systems.register_system(system);
+    }
+}
+
+impl Default for Scene {
+    fn default() -> Self {
+        Scene::new()
     }
 }

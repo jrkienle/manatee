@@ -1,5 +1,6 @@
 mod ecs;
 mod game;
+mod graphics;
 mod scene;
 
 // Structs that will actually be used by people developing with Manatee

@@ -742,9 +742,9 @@ name = "manatee"
 version = "0.0.1"
 dependencies = [
  "cgmath",
+ "downcast-rs",
  "hashbrown",
  "pollster",
- "rustc-hash",
  "wgpu",
  "winit",
 ]

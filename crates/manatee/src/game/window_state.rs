@@ -9,7 +9,7 @@ use winit::{
     window::{Window, WindowId},
 };
 
-use super::Gpu;
+use crate::graphics::Gpu;
 use super::SceneManager;
 
 pub struct WindowState {

@@ -26,3 +26,9 @@ impl EntityManager {
         self.entities.get(&entity_id).unwrap()
     }
 }
+
+impl Default for EntityManager {
+    fn default() -> Self {
+        EntityManager::new()
+    }
+}

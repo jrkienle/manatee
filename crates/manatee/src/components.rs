@@ -1,3 +1,5 @@
-mod camera_component;
+mod camera;
+mod position;
 
-pub use camera_component::CameraComponent;
+pub use camera::Camera;
+pub use position::Position;
