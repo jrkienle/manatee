@@ -1,6 +1,7 @@
 {
   "recommendations": [
     "github.vscode-github-actions", // Only recommended if you plan on modifying on CI pipeline
+    "PolyMeilex.wgsl", // Syntax highlighting for shader development, highly recommended
     "rust-lang.rust-analyzer", // Essentially required
     "streetsidesoftware.code-spell-checker" // This has saved me more times than I can count
   ]
