@@ -22,7 +22,7 @@ impl EntityManager {
         let entity = Entity::new(entity_id);
         self.entities.insert(entity_id, entity);
         self.len += 1;
-        println!("Added entity with ID {entity_id}");
+        println!("Added Entity with ID {entity_id}");
         self.entities.get(&entity_id).unwrap()
     }
 }

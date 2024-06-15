@@ -16,10 +16,9 @@ impl SystemManager {
 
     pub fn register_system<S: System>(&mut self, system: S) -> &dyn System {
         let system_id = self.len;
-        self.systems
-            .insert(system_id, Box::new(system));
+        self.systems.insert(system_id, Box::new(system));
         self.len += 1;
-        println!("Added entity with ID {system_id}");
+        println!("Added System with ID {system_id}");
         self.systems.get(&system_id).unwrap().as_ref()
     }
 }

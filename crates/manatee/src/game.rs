@@ -1,4 +1,3 @@
-mod asset;
 mod context;
 mod game_mode;
 mod window_state;
@@ -7,7 +6,6 @@ use winit::event_loop::EventLoop;
 
 use crate::{scene::Scene, scene::SceneManager};
 
-pub use asset::Asset;
 pub use context::Context;
 pub use game_mode::GameMode;
 pub use window_state::WindowState;
