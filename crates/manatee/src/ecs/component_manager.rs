@@ -15,13 +15,10 @@ impl ComponentManager {
     pub fn add_component_to_entity<C: Component>(&mut self, component: C, entity: &Entity) {
         let entity_id = entity.id;
         let component_name = component.type_name().to_string();
-        println!("Added Component with Name {component_name} to {entity_id}");
+        println!("Added Component {component_name} to Entity {entity_id}");
 
-        let component_row = self
-            .components
-            .entry(component_name)
-            .or_default();
-        
+        let component_row = self.components.entry(component_name).or_default();
+
         component_row.insert(entity_id, Box::new(component));
     }
 

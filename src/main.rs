@@ -9,8 +9,11 @@ pub fn main() {
     let mut game = Game::new();
     let mut editor_scene = Scene::new();
 
-    editor_scene.spawn(components::Camera::new());
     editor_scene.register_system(systems::CameraSystem::default());
+    editor_scene.register_system(systems::WgpuTutorialSystem::default());
+
+    editor_scene.spawn(components::Camera::default());
+    editor_scene.spawn(components::WgpuTutorial::default());
 
     game.load_scene(editor_scene);
     game.run();

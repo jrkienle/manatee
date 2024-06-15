@@ -1,5 +1,7 @@
 mod camera;
-mod position;
+mod transform;
+mod wgpu_tutorial;
 
 pub use camera::Camera;
-pub use position::Position;
+pub use transform::Transform;
+pub use wgpu_tutorial::WgpuTutorial;
