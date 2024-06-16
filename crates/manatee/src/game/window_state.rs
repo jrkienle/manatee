@@ -9,8 +9,8 @@ use winit::{
     window::{Window, WindowId},
 };
 
-use crate::graphics::Gpu;
 use super::SceneManager;
+use crate::graphics::Gpu;
 
 pub struct WindowState {
     pub(crate) gpu: Option<Arc<Gpu>>,
@@ -53,34 +53,23 @@ impl ApplicationHandler for WindowState {
         self.gpu = Some(gpu);
     }
 
-    fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
+    fn window_event(&mut self, _event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
         // TODO: Should the functionality inside of this match statement be abstracted into
         // individual struct methods for each event?
         match event {
             WindowEvent::CloseRequested => {
-                // TODO: I may need to add additional logic here if I allow the engine to create child
-                // windows (this is probably a SUPER useful edge case for building an editor app)
-                event_loop.exit();
+                // If I use event_loop.exit() here it throws a segfault on shut down, which is
+                // super annoying as it pops open a MacOS "report an error" dialog whenever I
+                // close to recompile. This seems to fix it, but idk if this is a good practice
+                std::process::exit(0);
             }
             WindowEvent::RedrawRequested => {
-                // let (systems, mut ctx) = Context::new(self);
                 let gpu = self.gpu.clone().unwrap();
                 self.scene_manager
                     .active_scene
                     .as_mut()
                     .unwrap()
                     .render(gpu);
-
-                // for (_, system) in systems.systems.iter_mut() {
-                //     system.get_mut().on_update(&mut ctx);
-                // }
-
-                // for (_, system) in ctx() {
-                //     let _foo = &mut system.get_mut().on_update(&mut ctx);
-                // }
-                // self.gpu.as_ref().unwrap().render_frame();
-                // Once I've rendered the frame, this exact event gets kicked off again to create
-                // an infinite game loop!
                 self.window.as_ref().unwrap().request_redraw();
             }
             WindowEvent::Resized(physical_size) => {

@@ -2,6 +2,7 @@ mod context;
 mod game_mode;
 mod window_state;
 
+use std::error::Error;
 use winit::event_loop::EventLoop;
 
 use crate::{scene::Scene, scene::SceneManager};
@@ -30,7 +31,9 @@ impl Game {
     }
 
     pub fn run(mut self) {
-        self.event_loop.run_app(&mut self.window_state).unwrap();
+        match self.event_loop.run_app(&mut self.window_state) {
+            _ => (),
+        }
     }
 }
 
