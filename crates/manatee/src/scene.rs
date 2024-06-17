@@ -3,8 +3,8 @@ use std::{iter::once, sync::Arc};
 mod scene_manager;
 pub use scene_manager::SceneManager;
 
+use crate::ecs::EntityManager;
 use crate::ecs::{Component, ComponentManager};
-use crate::ecs::{Entity, EntityManager};
 use crate::ecs::{System, SystemManager};
 use crate::game::Context;
 use crate::graphics::{Gpu, RenderTarget};
@@ -24,7 +24,7 @@ impl Scene {
         }
     }
 
-    pub fn render(&mut self, gpu: Arc<Gpu>) {
+    pub(crate) fn render(&mut self, gpu: Arc<Gpu>) {
         let mut render_target = RenderTarget::new(gpu.clone());
         let mut ctx = Context {
             components: &mut self.components,
@@ -41,10 +41,16 @@ impl Scene {
         render_target.surface_texture.present();
     }
 
-    pub fn spawn<C: Component>(&mut self, component: C) -> &Entity {
-        let entity = self.entities.add();
-        self.components.add_component_to_entity(component, entity);
-        entity
+    pub fn add_component<C: Component>(&mut self, entity_id: &u32, component: C) {
+        let entity = self.entities.get(entity_id).expect("Entity not found");
+        self.components.add(component, entity);
+    }
+
+    pub fn spawn<C: Component>(&mut self, component: C) -> u32 {
+        let entity_id = self.entities.create();
+        let entity = self.entities.get(&entity_id).unwrap();
+        self.components.add(component, entity);
+        entity_id
     }
 
     pub fn register_system<S: System>(&mut self, system: S) {

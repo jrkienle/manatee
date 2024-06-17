@@ -17,13 +17,17 @@ impl EntityManager {
         }
     }
 
-    pub fn add(&mut self) -> &Entity {
+    pub fn create(&mut self) -> u32 {
         let entity_id = self.len;
         let entity = Entity::new(entity_id);
         self.entities.insert(entity_id, entity);
         self.len += 1;
         println!("Added Entity with ID {entity_id}");
-        self.entities.get(&entity_id).unwrap()
+        entity_id
+    }
+
+    pub fn get(&self, entity_id: &u32) -> Option<&Entity> {
+        self.entities.get(entity_id)
     }
 }
 
