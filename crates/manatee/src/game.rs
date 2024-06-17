@@ -2,7 +2,6 @@ mod context;
 mod game_mode;
 mod window_state;
 
-use std::error::Error;
 use winit::event_loop::EventLoop;
 
 use crate::{scene::Scene, scene::SceneManager};
