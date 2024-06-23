@@ -5,11 +5,10 @@ version = "0.0.1"
 edition = "2021"
 
 [dependencies]
-<<<<<<< Updated upstream
-cgmath = "0.18.0"
-pollster = "0.3.0"
-=======
 aquarium = { path = "../aquarium" }
+cgmath = "0.18.0"
+downcast-rs = "1.2.1"
 hashbrown = "0.14.5"
->>>>>>> Stashed changes
+pollster = "0.3.0"
 wgpu = "0.20.0"
+winit = "0.30.0"

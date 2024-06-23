@@ -1,0 +1,16 @@
+[package]
+name = "aquarium"
+description = "A cross-platform windowing library, built for Manatee and the Manatee editor"
+version = "0.0.1"
+edition = "2021"
+
+[dependencies]
+raw-window-handle = "0.6.2"
+
+[dependencies.windows]
+version = "0.57.0"
+features = [
+    "Win32_Graphics_Gdi",
+    "Win32_System_LibraryLoader",
+    "Win32_UI_WindowsAndMessaging"
+]
