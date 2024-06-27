@@ -5,6 +5,7 @@ version = "0.0.1"
 edition = "2021"
 
 [dependencies]
+aquarium = { path = "../aquarium" }
 cgmath = "0.18.0"
 pollster = "0.3.0"
 wgpu = "0.20.0"
