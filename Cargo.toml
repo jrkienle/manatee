@@ -5,9 +5,7 @@ version = "0.0.1"
 edition = "2021"
 
 [workspace]
-members = [
-  "crates/manatee",
-]
+members = ["crates/aquarium", "crates/manatee"]
 
 [dependencies]
 manatee = { path = "./crates/manatee" }
