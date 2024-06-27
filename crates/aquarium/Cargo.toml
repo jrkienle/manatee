@@ -5,12 +5,22 @@ version = "0.0.1"
 edition = "2021"
 
 [dependencies]
-cocoa = "0.25.0"
 hashbrown = "0.14.5"
-objc = "0.2.7"
 raw-window-handle = "0.6.2"
 
 [dependencies.windows]
+version = "0.57.0"
+features = [
+    "Win32_Graphics_Gdi",
+    "Win32_System_LibraryLoader",
+    "Win32_UI_WindowsAndMessaging",
+]
+
+[target.'cfg(macos)'.dependencies]
+cocoa = "0.25.0"
+objc = "0.2.7"
+
+[target.'cfg(windows)'.dependencies.windows]
 version = "0.57.0"
 features = [
     "Win32_Graphics_Gdi",
