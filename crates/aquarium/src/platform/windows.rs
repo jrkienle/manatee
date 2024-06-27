@@ -1,6 +1,6 @@
 use super::Platform;
 use crate::window::{Window, WindowParams};
-use raw_window_handle::Win32WindowHandle;
+use raw_window_handle::{DisplayHandle, Win32WindowHandle, WindowHandle};
 use std::num::NonZeroIsize;
 use windows::{
     core::{w, HSTRING},
@@ -59,8 +59,8 @@ impl Platform for WindowsPlatform {
                 WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                 CW_USEDEFAULT,
                 CW_USEDEFAULT,
-                params.width.into(),
-                params.height.into(),
+                params.width as i32,
+                params.height as i32,
                 None,
                 None,
                 instance,
@@ -69,9 +69,15 @@ impl Platform for WindowsPlatform {
 
             ShowWindow(raw_hwnd, SW_SHOW).unwrap();
 
+            let display_handle = DisplayHandle::windows();
             let window_handle = Win32WindowHandle::new(NonZeroIsize::new(raw_hwnd.0).unwrap());
 
-            Window {}
+            Window {
+                height: params.height,
+                display_handle,
+                window_handle: WindowHandle::borrow_raw(window_handle.into()),
+                width: params.width,
+            }
         }
     }
 

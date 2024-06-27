@@ -3,7 +3,7 @@ mod mac;
 #[cfg(target_os = "windows")]
 mod windows;
 
-use crate::window::{Window, WindowParams};
+use crate::window::{Window, WindowContext, WindowParams};
 use std::sync::Arc;
 
 #[cfg(target_os = "macos")]

@@ -1,6 +1,6 @@
 use crate::{
     platform::{current_platform, Platform},
-    window::{Window, WindowParams},
+    window::{Window, WindowContext, WindowParams},
 };
 use hashbrown::HashMap;
 use std::{borrow::BorrowMut, sync::Arc};
@@ -57,12 +57,19 @@ impl AppContext {
             .expect("Main window not found")
     }
 
-    pub fn new_window(&mut self, params: WindowParams) -> &mut Window {
+    pub fn new_window<F>(&mut self, params: WindowParams, on_open: F) 
+    where
+        F: 'static + FnOnce(&mut WindowContext),
+    {
         let window_id = self.next_window_id;
-        self.windows
-            .insert(window_id, self.platform.new_window(params));
         self.next_window_id += 1;
-        self.windows.get_mut(&window_id).unwrap()
+        let mut window = self.platform.new_window(params);
+        on_open(&mut WindowContext::new(self, &mut window));
+
+        self.windows
+            .insert(window_id, window);
+
+        self.windows.get_mut(&window_id).unwrap();
     }
 }
 
