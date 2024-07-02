@@ -5,4 +5,5 @@ zig-out
 book/book
 
 # Cache
+.zig-cache
 zig-cache
