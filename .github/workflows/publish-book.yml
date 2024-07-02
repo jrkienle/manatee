@@ -1,0 +1,30 @@
+name: Publish Book
+'on':
+    push:
+        branches:
+            - main
+            - setup-repo # TODO: Remove
+jobs:
+    build-publish-book:
+        runs-on:
+            - ubuntu-latest
+        steps:
+            -
+                name: Checkout Repo
+                uses: actions/checkout@v2
+            -
+                name: Setup mdBook
+                uses: peaceiris/actions-mdbook@v2
+                with:
+                    mdbook-version: 0.4.10
+            -
+                name: Build Book
+                run: mdbook build book
+            -
+                name: Publish Book to book.manateeengine.org
+                uses: cloudflare/pages-action@v1
+                with:
+                    apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+                    accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+                    projectName: manateebook
+                    workingDirectory: 'book/book'
