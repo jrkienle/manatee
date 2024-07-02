@@ -19,7 +19,7 @@ pub fn build(b: *std.Build) void {
         .name = "manatee",
         // In this case the main source file is merely a path, however, in more
         // complicated build scripts, this could be a generated file.
-        .root_source_file = b.path("src/root.zig"),
+        .root_source_file = b.path("src/engine/root.zig"),
         .target = target,
         .optimize = optimize,
     });
@@ -30,8 +30,8 @@ pub fn build(b: *std.Build) void {
     b.installArtifact(lib);
 
     const exe = b.addExecutable(.{
-        .name = "manatee",
-        .root_source_file = b.path("src/main.zig"),
+        .name = "manatee-editor",
+        .root_source_file = b.path("src/editor/main.zig"),
         .target = target,
         .optimize = optimize,
     });
