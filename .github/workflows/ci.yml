@@ -22,5 +22,19 @@ jobs:
                 name: Build Engine and Editor
                 run: zig build
             -
-                name: Test
+                name: Run Tests
                 run: zig build test
+            -
+                name: Generate Engine Documentation
+                run: zig build docs
+                if: github.ref == 'refs/heads/setup-repo'
+            -
+                name: Publish Docs to docs.manateeengine.org
+                uses: cloudflare/pages-action@v1
+                if: github.ref == 'refs/heads/setup-repo'
+                with:
+                    apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+                    accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+                    directory: docs
+                    projectName: manateedocs
+                    workingDirectory: zig-out
