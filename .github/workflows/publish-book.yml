@@ -3,7 +3,6 @@ name: Publish Book
     push:
         branches:
             - main
-            - setup-repo # TODO: Remove
 jobs:
     build-publish-book:
         runs-on:
