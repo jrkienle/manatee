@@ -1,0 +1,21 @@
+name: CI
+on:
+    pull_request:
+    push:
+        branches:
+            - main
+jobs:
+    build-lint-test:
+        # TODO: Set up CI runner for MacOS once I have parity (starting on Windows first)
+        runs-on: [windows-latest]
+        steps:
+            - name: Checkout Repo
+              uses: actions/checkout@v2
+            - name: Setup Zig
+              uses: goto-bus-stop/setup-zig@v2
+            - name: Check Formatting
+              run: zig fmt --check .
+            - name: Build Engine and Editor
+              run: zig build
+            - name: Test
+              run: zig build test
