@@ -1,0 +1,8 @@
+{
+  "editor.insertSpaces": false,
+  "editor.tabSize": 4,
+  "[zig]": {
+    "editor.defaultFormatter": "ziglang.vscode-zig",
+    "editor.formatOnSave": true,
+  }
+}

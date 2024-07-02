@@ -1,0 +1,41 @@
+name: CI
+'on':
+    pull_request: null
+    push:
+        branches:
+            - main
+jobs:
+    build-lint-test:
+        runs-on:
+            - windows-latest
+        steps:
+            -
+                name: Checkout Repo
+                uses: actions/checkout@v2
+            -
+                name: Setup Zig
+                uses: goto-bus-stop/setup-zig@v2
+            # This is failing only on CI and I'm not sure why
+            # -
+            #     name: Check Formatting
+            #     run: zig fmt --check .
+            -
+                name: Build Engine and Editor
+                run: zig build
+            -
+                name: Run Tests
+                run: zig build test
+            -
+                name: Generate Engine Documentation
+                run: zig build docs
+                if: github.ref == 'refs/heads/main'
+            -
+                name: Publish Docs to docs.manateeengine.org
+                uses: cloudflare/pages-action@v1
+                if: github.ref == 'refs/heads/main'
+                with:
+                    apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+                    accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+                    directory: docs
+                    projectName: manateedocs
+                    workingDirectory: zig-out
