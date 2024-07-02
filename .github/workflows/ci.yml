@@ -28,11 +28,11 @@ jobs:
             -
                 name: Generate Engine Documentation
                 run: zig build docs
-                if: github.ref == 'refs/heads/setup-repo'
+                if: github.ref == 'refs/heads/main'
             -
                 name: Publish Docs to docs.manateeengine.org
                 uses: cloudflare/pages-action@v1
-                if: github.ref == 'refs/heads/setup-repo'
+                if: github.ref == 'refs/heads/main'
                 with:
                     apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
                     accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
