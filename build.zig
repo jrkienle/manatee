@@ -5,27 +5,39 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    // Creates a Zig module for the Manatee engine that allows Manatee to be imported both into the
+    // editor as well as any game projects that use it
+    const engine_module = b.addModule("manatee", .{
+        .root_source_file = b.path("src/engine/main.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
     // Creates a Manatee static library for the Manatee engine. This allows Manatee to be used with
     // other languages as long as they support loading static libs
-    const engine = b.addStaticLibrary(.{
+    const engine_lib = b.addStaticLibrary(.{
         .name = "manatee",
-        .root_source_file = b.path("src/engine.zig"),
+        .root_source_file = b.path("src/engine/main.zig"),
         .target = target,
         .optimize = optimize,
     });
-    b.installArtifact(engine);
+    b.installArtifact(engine_lib);
+
 
     // Creates the executable for the Manatee Editor
-    const editor = b.addExecutable(.{
+    const editor_exe = b.addExecutable(.{
         .name = "manatee-editor",
-        .root_source_file = b.path("src/editor.zig"),
+        .root_source_file = b.path("src/editor/main.zig"),
         .target = target,
         .optimize = optimize,
     });
-    b.installArtifact(editor);
+    b.installArtifact(editor_exe);
+
+    // Register Engine as a Dependency for Editor allowing it to be imported
+    editor_exe.root_module.addImport("manatee", engine_module);
 
     // Allows us to build and run run the Manatee Editor by running `zig build run`
-    const run_cmd = b.addRunArtifact(editor);
+    const run_cmd = b.addRunArtifact(editor_exe);
     run_cmd.step.dependOn(b.getInstallStep());
     if (b.args) |args| {
         run_cmd.addArgs(args);
@@ -45,7 +57,7 @@ pub fn build(b: *std.Build) void {
 
     // Auto-generates API documentation based off of code comments
     const install_docs = b.addInstallDirectory(.{
-        .source_dir = engine.getEmittedDocs(),
+        .source_dir = engine_lib.getEmittedDocs(),
         .install_dir = .prefix,
         .install_subdir = "docs",
     });
