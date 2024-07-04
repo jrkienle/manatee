@@ -13,17 +13,6 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    // Creates a Manatee static library for the Manatee engine. This allows Manatee to be used with
-    // other languages as long as they support loading static libs
-    const engine_lib = b.addStaticLibrary(.{
-        .name = "manatee",
-        .root_source_file = b.path("src/engine/main.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-    b.installArtifact(engine_lib);
-
-
     // Creates the executable for the Manatee Editor
     const editor_exe = b.addExecutable(.{
         .name = "manatee-editor",
@@ -57,7 +46,7 @@ pub fn build(b: *std.Build) void {
 
     // Auto-generates API documentation based off of code comments
     const install_docs = b.addInstallDirectory(.{
-        .source_dir = engine_lib.getEmittedDocs(),
+        .source_dir = editor_exe.getEmittedDocs(),
         .install_dir = .prefix,
         .install_subdir = "docs",
     });
