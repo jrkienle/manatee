@@ -25,6 +25,19 @@ pub fn build(b: *std.Build) void {
     // Register Engine as a Dependency for Editor allowing it to be imported
     editor_exe.root_module.addImport("manatee", engine_module);
 
+    // Register OS-Specific Dependencies (Why the fuck is doing this in Zig so hard???)
+    switch (editor_exe.rootModuleTarget().os.tag) {
+        .macos => blk: {
+            // TODO: Figure out which one of these libraries to use
+            // const objc = b.dependency("zig-objc", .{});
+            // engine_module.addImport("objc", objc.module("objc"));
+            // const objc = b.dependency("mach-objc", .{});
+            // engine_module.addImport("objc", objc.module("mach-objc"));
+            break :blk;
+        },
+        else => {},
+    }
+
     // Allows us to build and run run the Manatee Editor by running `zig build run`
     const run_cmd = b.addRunArtifact(editor_exe);
     run_cmd.step.dependOn(b.getInstallStep());
