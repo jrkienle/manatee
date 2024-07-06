@@ -11,6 +11,10 @@
         //     .url = "https://github.com/hexops/mach-objc/archive/055619a732ae50ba24eb04399613be87f8432f0f.tar.gz",
         //     .hash = "1220211475420584a552b461dd569f891d29cb8e9e485b97053be604680c8d6e2a3e",
         // },
+        .zigwin32 = .{
+            .url = "https://github.com/marlersoft/zigwin32/archive/4a78e716ae6496f52d9ddaf4fda2c4bb692631cd.tar.gz",
+            .hash = "1220da4cab188b7b0e351de67626ca0dcadceddd16ca5997cfb578697f0525a59dac",
+        },
     },
     .paths = .{ "src", "build.zig", "build.zig.zon" },
 }

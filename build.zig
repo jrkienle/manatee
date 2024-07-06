@@ -35,6 +35,11 @@ pub fn build(b: *std.Build) void {
             // engine_module.addImport("objc", objc.module("mach-objc"));
             break :blk;
         },
+        .windows => blk: {
+            const win32 = b.dependency("zigwin32", .{});
+            engine_module.addImport("win32", win32.module("zigwin32"));
+            break :blk;
+        },
         else => {},
     }
 
