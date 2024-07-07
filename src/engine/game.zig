@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const platform = @import("./platform.zig");
+const windowing = @import("./windowing/windowing.zig");
 
 pub const Game = struct {
     pub fn init() Game {
@@ -8,9 +8,9 @@ pub const Game = struct {
     }
 
     pub fn run(self: *Game) *Game {
-        platform.init();
-        platform.Window.init();
-        platform.run();
+        windowing.init();
+        windowing.create_window();
+        windowing.run();
         return self;
     }
 };
