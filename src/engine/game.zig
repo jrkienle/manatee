@@ -9,6 +9,7 @@ pub const Game = struct {
 
     pub fn run(self: *Game) *Game {
         platform.init();
+        platform.Window.init();
         platform.run();
         return self;
     }
