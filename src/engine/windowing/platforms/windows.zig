@@ -4,15 +4,12 @@ const win32 = @import("win32").everything;
 var hInstance: win32.HINSTANCE = undefined;
 
 pub fn init() void {
-    std.debug.print("Platform.Init Started\n", .{});
     hInstance = win32.GetModuleHandleW(null).?;
-    std.debug.print("Platform.Init Finished\n", .{});
 }
 
 pub const Window = struct {
     // TODO: Return some generic window obj to manipulate window
     pub fn init() void {
-        std.debug.print("Platform.Window.Init Started\n", .{});
         const CLASS_NAME = win32.L("Manatee");
         const wc = win32.WNDCLASSEXW{
             .cbSize = @sizeOf(win32.WNDCLASSEXW),
