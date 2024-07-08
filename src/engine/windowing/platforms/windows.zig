@@ -3,6 +3,7 @@ const win32 = @import("win32").everything;
 
 var hInstance: win32.HINSTANCE = undefined;
 
+// TODO: Does this need a deinit function? What is the best practice for those?
 pub fn init() void {
     hInstance = win32.GetModuleHandleW(null).?;
 }

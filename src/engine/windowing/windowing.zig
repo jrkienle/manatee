@@ -23,4 +23,8 @@ pub const WindowManager = struct {
         platform.run();
         return self;
     }
+
+    pub fn deinit(self: *WindowManager) void {
+        self.* = undefined;
+    }
 };
