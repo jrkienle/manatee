@@ -29,7 +29,7 @@ pub const Window = struct {
         _ = win32.RegisterClassExW(&wc);
 
         // I hate that the Zig standard formatter won't let me add line breaks to func calls lol
-        const hwnd = win32.CreateWindowExW(.{}, CLASS_NAME, win32.L("Manatee Game Engine Window"), win32.WS_VISIBLE, win32.CW_USEDEFAULT, win32.CW_USEDEFAULT, 400, 200, null, null, hInstance, null);
+        const hwnd = win32.CreateWindowExW(win32.WS_EX_OVERLAPPEDWINDOW, CLASS_NAME, win32.L("Manatee Game Engine Window"), win32.WS_OVERLAPPEDWINDOW, win32.CW_USEDEFAULT, win32.CW_USEDEFAULT, 400, 200, null, null, hInstance, null);
 
         _ = win32.ShowWindow(hwnd, win32.SW_SHOW);
     }
