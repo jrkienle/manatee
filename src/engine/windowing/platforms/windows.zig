@@ -55,12 +55,7 @@ fn WindowProc(
             return 0;
         },
         win32.WM_PAINT => {
-            var ps: win32.PAINTSTRUCT = undefined;
-            const hdc = win32.BeginPaint(hwnd, &ps);
-            _ = win32.FillRect(hdc, &ps.rcPaint, @ptrFromInt(@intFromEnum(win32.COLOR_WINDOW) + 1));
-            _ = win32.TextOutW(hdc, 20, 20, win32.L("TODO: Attach Vulkan and D3D12 Renderers to Window"), 49);
-            _ = win32.EndPaint(hwnd, &ps);
-            return 0;
+            return win32.ValidateRect(hwnd, null);
         },
         else => {
             return win32.DefWindowProcW(hwnd, uMsg, wParam, lParam);
