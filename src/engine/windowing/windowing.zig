@@ -7,24 +7,4 @@ const platform = switch (builtin.os.tag) {
     else => @compileError(std.fmt.comptimePrint("Unsupported OS: {}", .{builtin.os.tag})),
 };
 
-pub const WindowManager = struct {
-    pub fn init() WindowManager {
-        platform.init();
-
-        return WindowManager{};
-    }
-
-    pub fn create_window(self: *WindowManager) *WindowManager {
-        platform.Window.init();
-        return self;
-    }
-
-    pub fn run(self: *WindowManager) *WindowManager {
-        platform.run();
-        return self;
-    }
-
-    pub fn deinit(self: *WindowManager) void {
-        self.* = undefined;
-    }
-};
+pub usingnamespace platform;
