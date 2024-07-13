@@ -195,9 +195,9 @@ pub const Surface = struct {
     instance: *Instance,
     surface: vk.SurfaceKHR,
 
-    pub fn init(instance: *Instance, window_manager: windowing.WindowManager, window: windowing.Window) !Surface {
+    pub fn init(instance: *Instance, window: windowing.Window) !Surface {
         const surface_create_info = vk.Win32SurfaceCreateInfoKHR{
-            .hinstance = @ptrCast(window_manager.hInstance),
+            .hinstance = @ptrCast(window.hInstance),
             .hwnd = @ptrCast(window.hwnd),
         };
         const surface = try instance.instance_dispatch.createWin32SurfaceKHR(instance.instance, &surface_create_info, null);

@@ -2,7 +2,7 @@ const std = @import("std");
 const win32 = @import("win32").everything;
 
 pub const WindowManager = struct {
-    hInstance: *anyopaque,
+    hInstance: win32.HINSTANCE,
 
     pub fn init() WindowManager {
         const hInstance = win32.GetModuleHandleW(null).?;
@@ -24,7 +24,8 @@ pub const WindowManager = struct {
 };
 
 pub const Window = struct {
-    hwnd: *anyopaque,
+    hInstance: win32.HINSTANCE,
+    hwnd: win32.HWND,
 
     pub fn init(window_manager: *WindowManager) Window {
         const CLASS_NAME = win32.L("Manatee");
@@ -46,11 +47,12 @@ pub const Window = struct {
         _ = win32.RegisterClassExW(&wc);
 
         // I hate that the Zig standard formatter won't let me add line breaks to func calls lol
-        const hwnd = win32.CreateWindowExW(win32.WS_EX_OVERLAPPEDWINDOW, CLASS_NAME, win32.L("Manatee Game Engine Window"), win32.WS_OVERLAPPEDWINDOW, win32.CW_USEDEFAULT, win32.CW_USEDEFAULT, 400, 200, null, null, @ptrCast(window_manager.hInstance), null);
+        const hwnd = win32.CreateWindowExW(win32.WS_EX_OVERLAPPEDWINDOW, CLASS_NAME, win32.L("Manatee Game Engine Window"), win32.WS_OVERLAPPEDWINDOW, win32.CW_USEDEFAULT, win32.CW_USEDEFAULT, 400, 200, null, null, window_manager.hInstance, null);
 
         _ = win32.ShowWindow(hwnd, win32.SW_SHOW);
 
         return Window{
+            .hInstance = window_manager.hInstance,
             .hwnd = hwnd.?,
         };
     }
