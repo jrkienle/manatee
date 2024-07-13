@@ -25,8 +25,9 @@ const DeviceDispatch = vk.DeviceWrapper(apis);
 
 pub const Instance = struct {
     base_dispatch: BaseDispatch,
-    instance_dispatch: InstanceDispatch,
     instance: vk.Instance,
+    instance_dispatch: InstanceDispatch,
+    device: vk.Device,
     device_dispatch: DeviceDispatch,
 
     pub fn init() !Instance {
@@ -56,13 +57,15 @@ pub const Instance = struct {
 
         return Instance{
             .base_dispatch = base_dispatch,
-            .instance_dispatch = instance_dispatch,
             .instance = instance,
+            .instance_dispatch = instance_dispatch,
+            .device = device,
             .device_dispatch = device_dispatch,
         };
     }
 
     pub fn deinit(self: *Instance) void {
+        self.device_dispatch.destroyDevice(self.device, null);
         self.instance_dispatch.destroyInstance(self.instance, null);
         vulkan_lib.close();
         self.* = undefined;
