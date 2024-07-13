@@ -43,6 +43,38 @@ pub const Instance = struct {
         // Create a proxy for the Vulkan lib
         const base_dispatch = try BaseDispatch.load(getInstanceProcAddress);
 
+        // Create the Vulkan instance
+        const instance = try createInstance(base_dispatch);
+
+        // Create a proxy for the instance
+        const instance_dispatch = try InstanceDispatch.load(instance, base_dispatch.dispatch.vkGetInstanceProcAddr);
+
+        const device = try createDevice(instance_dispatch, instance);
+
+        // Create a proxy for the device
+        const device_dispatch = try DeviceDispatch.load(device, instance_dispatch.dispatch.vkGetDeviceProcAddr);
+
+        return Instance{
+            .base_dispatch = base_dispatch,
+            .instance_dispatch = instance_dispatch,
+            .instance = instance,
+            .device_dispatch = device_dispatch,
+        };
+    }
+
+    pub fn deinit(self: *Instance) void {
+        self.instance_dispatch.destroyInstance(self.instance, null);
+        vulkan_lib.close();
+        self.* = undefined;
+    }
+
+    // TODO:  Document this, this was a bitch to figure out
+    fn getInstanceProcAddress(_: vk.Instance, name_ptr: [*:0]const u8) vk.PfnVoidFunction {
+        const name = std.mem.span(name_ptr);
+        return vulkan_lib.lookup(vk.PfnVoidFunction, name) orelse null;
+    }
+
+    fn createInstance(base_dispatch: BaseDispatch) !vk.Instance {
         // Create a Vulkan instance
         const application_info = vk.ApplicationInfo{
             .p_application_name = "Manatee Game",
@@ -63,10 +95,10 @@ pub const Instance = struct {
             .pp_enabled_extension_names = @ptrCast(&instance_extensions),
         };
         const instance = try base_dispatch.createInstance(&instance_create_info, null);
+        return instance;
+    }
 
-        // Create a proxy for the instance
-        const instance_dispatch = try InstanceDispatch.load(instance, base_dispatch.dispatch.vkGetInstanceProcAddr);
-
+    fn createDevice(instance_dispatch: InstanceDispatch, instance: vk.Instance) !vk.Device {
         var physical_devices_count: u32 = 0;
         _ = try instance_dispatch.enumeratePhysicalDevices(instance, &physical_devices_count, null);
 
@@ -152,27 +184,7 @@ pub const Instance = struct {
         // FINALLY I can create the actual device (Vulkan is so fucking verbose)
         const device = try instance_dispatch.createDevice(best_physical_device.?.physical_device, &device_create_info, null);
 
-        // Create a proxy for the device
-        const device_dispatch = try DeviceDispatch.load(device, instance_dispatch.dispatch.vkGetDeviceProcAddr);
-
-        return Instance{
-            .base_dispatch = base_dispatch,
-            .instance_dispatch = instance_dispatch,
-            .instance = instance,
-            .device_dispatch = device_dispatch,
-        };
-    }
-
-    pub fn deinit(self: *Instance) void {
-        self.instance_dispatch.destroyInstance(self.instance, null);
-        vulkan_lib.close();
-        self.* = undefined;
-    }
-
-    // TODO:  Document this, this was a bitch to figure out
-    fn getInstanceProcAddress(_: vk.Instance, name_ptr: [*:0]const u8) vk.PfnVoidFunction {
-        const name = std.mem.span(name_ptr);
-        return vulkan_lib.lookup(vk.PfnVoidFunction, name) orelse null;
+        return device;
     }
 };
 
