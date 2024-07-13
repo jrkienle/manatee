@@ -2,7 +2,7 @@ const std = @import("std");
 const win32 = @import("win32").everything;
 
 pub const WindowManager = struct {
-    hInstance: win32.HINSTANCE,
+    hInstance: *anyopaque,
 
     pub fn init() WindowManager {
         const hInstance = win32.GetModuleHandleW(null).?;
@@ -24,6 +24,8 @@ pub const WindowManager = struct {
 };
 
 pub const Window = struct {
+    hwnd: *anyopaque,
+
     pub fn init(window_manager: *WindowManager) Window {
         const CLASS_NAME = win32.L("Manatee");
         const wc = win32.WNDCLASSEXW{
@@ -32,7 +34,7 @@ pub const Window = struct {
             .lpfnWndProc = WindowProc,
             .cbClsExtra = 0,
             .cbWndExtra = 0,
-            .hInstance = window_manager.hInstance,
+            .hInstance = @ptrCast(window_manager.hInstance),
             .hIcon = null,
             .hCursor = null,
             .hbrBackground = null,
@@ -44,11 +46,13 @@ pub const Window = struct {
         _ = win32.RegisterClassExW(&wc);
 
         // I hate that the Zig standard formatter won't let me add line breaks to func calls lol
-        const hwnd = win32.CreateWindowExW(win32.WS_EX_OVERLAPPEDWINDOW, CLASS_NAME, win32.L("Manatee Game Engine Window"), win32.WS_OVERLAPPEDWINDOW, win32.CW_USEDEFAULT, win32.CW_USEDEFAULT, 400, 200, null, null, window_manager.hInstance, null);
+        const hwnd = win32.CreateWindowExW(win32.WS_EX_OVERLAPPEDWINDOW, CLASS_NAME, win32.L("Manatee Game Engine Window"), win32.WS_OVERLAPPEDWINDOW, win32.CW_USEDEFAULT, win32.CW_USEDEFAULT, 400, 200, null, null, @ptrCast(window_manager.hInstance), null);
 
         _ = win32.ShowWindow(hwnd, win32.SW_SHOW);
 
-        return Window{};
+        return Window{
+            .hwnd = hwnd.?,
+        };
     }
 
     pub fn deinit(self: *Window) void {
