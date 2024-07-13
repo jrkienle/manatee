@@ -294,3 +294,18 @@ pub const GpuInstance = struct {
         };
     }
 };
+
+// This should probably go in the main GPUInstance for the best multi backend experience, but the
+// Vulkan Zig example I'm following has it separate so I'll also keep it separate for now
+pub const Swapchain = struct {
+    gpu_instance: *GpuInstance,
+    pub fn init(gpu_instance: *GpuInstance) !Swapchain {
+        return Swapchain{
+            .gpu_instance = gpu_instance,
+        };
+    }
+
+    pub fn deinit(self: *Swapchain) void {
+        self.* = undefined;
+    }
+};
