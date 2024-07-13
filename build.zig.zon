@@ -15,6 +15,14 @@
             .url = "https://github.com/marlersoft/zigwin32/archive/4a78e716ae6496f52d9ddaf4fda2c4bb692631cd.tar.gz",
             .hash = "1220da4cab188b7b0e351de67626ca0dcadceddd16ca5997cfb578697f0525a59dac",
         },
+        .@"vulkan-zig" = .{
+            .url = "https://github.com/Snektron/vulkan-zig/archive/66b7b773bb61e2102025f2d5ff0ae8c5f53e19cc.tar.gz",
+            .hash = "12208958f173b8b81bfac797955f0416ab38b21d1f69d4ebf6c7ca460a828a41cd45",
+        },
+        .@"vulkan-headers" = .{
+            .url = "https://github.com/KhronosGroup/Vulkan-Headers/archive/190d2cb24e90e5bf2bec0a75604a9b3586485b6d.tar.gz",
+            .hash = "1220e70b9e0d124b04778cebdecabda4cdc5caab4bbaa9a1bbb9bba5ee51245b73a1",
+        },
     },
     .paths = .{ "src", "build.zig", "build.zig.zon" },
 }

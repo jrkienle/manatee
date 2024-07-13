@@ -22,11 +22,8 @@ pub fn build(b: *std.Build) void {
     });
     b.installArtifact(editor_exe);
 
-    // Register Engine as a Dependency for Editor allowing it to be imported
-    editor_exe.root_module.addImport("manatee", engine_module);
-
     // Register OS-Specific Dependencies (Why the fuck is doing this in Zig so hard???)
-    switch (editor_exe.rootModuleTarget().os.tag) {
+    switch (target.result.os.tag) {
         .macos => blk: {
             // TODO: Figure out which one of these libraries to use
             // const objc = b.dependency("zig-objc", .{});
@@ -38,10 +35,29 @@ pub fn build(b: *std.Build) void {
         .windows => blk: {
             const win32 = b.dependency("zigwin32", .{});
             engine_module.addImport("win32", win32.module("zigwin32"));
+
+            // vulkan-zig requires
+            const registry = b.dependency("vulkan-headers", .{}).path("registry/vk.xml");
+            const vk_gen = b.dependency("vulkan-zig", .{}).artifact("vulkan-zig-generator");
+            const vk_generate_cmd = b.addRunArtifact(vk_gen);
+            vk_generate_cmd.addFileArg(registry);
+            const vulkan_zig = b.addModule("vulkan-zig", .{
+                .root_source_file = vk_generate_cmd.addOutputFileArg("vk.zig"),
+            });
+            engine_module.addImport("vulkan", vulkan_zig);
+
+            // For some reason ZLS autocomplete stops working when editor_exe doesn't have
+            // engine_module's imports also added to it. There's probably a way to fix this but I
+            // have no idea how, these should probably be stripped before a prod build
+            editor_exe.root_module.addImport("vulkan", vulkan_zig);
+            editor_exe.root_module.addImport("win32", win32.module("zigwin32"));
             break :blk;
         },
         else => {},
     }
+
+    // Register Engine as a Dependency for Editor allowing it to be imported
+    editor_exe.root_module.addImport("manatee", engine_module);
 
     // Allows us to build and run run the Manatee Editor by running `zig build run`
     const run_cmd = b.addRunArtifact(editor_exe);
