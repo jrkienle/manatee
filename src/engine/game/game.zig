@@ -18,7 +18,7 @@ pub const Game = struct {
     pub fn run(self: *Game) !void {
         var window = windowing.Window.init(&self.window_manager);
         defer window.deinit();
-        var surface = try gpu.Surface.init(self.gpu_instance, self.window_manager, window);
+        var surface = try gpu.Surface.init(&self.gpu_instance, self.window_manager, window);
         defer surface.deinit();
         self.window_manager.run();
     }

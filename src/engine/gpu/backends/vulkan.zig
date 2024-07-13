@@ -112,13 +112,10 @@ pub const Instance = struct {
                 defer allocator.free(queue_family_properties);
                 _ = instance_dispatch.getPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_property_count, queue_family_properties.ptr);
                 for (queue_family_properties, 0..) |family, i| {
-                    std.debug.print("Checking Queue Family #{}\n", .{i});
                     if (family.queue_flags.compute_bit) {
                         queue_family = @intCast(i);
                     }
                 }
-
-                std.debug.print("Queue Family Index {}\n", .{queue_family.?});
 
                 best_physical_device = DeviceCandidate{
                     .physical_device = physical_device,
@@ -180,9 +177,10 @@ pub const Instance = struct {
 };
 
 pub const Surface = struct {
+    instance: *Instance,
     surface: vk.SurfaceKHR,
 
-    pub fn init(instance: Instance, window_manager: windowing.WindowManager, window: windowing.Window) !Surface {
+    pub fn init(instance: *Instance, window_manager: windowing.WindowManager, window: windowing.Window) !Surface {
         const surface_create_info = vk.Win32SurfaceCreateInfoKHR{
             .hinstance = @ptrCast(window_manager.hInstance),
             .hwnd = @ptrCast(window.hwnd),
@@ -190,11 +188,13 @@ pub const Surface = struct {
         const surface = try instance.instance_dispatch.createWin32SurfaceKHR(instance.instance, &surface_create_info, null);
 
         return Surface{
+            .instance = instance,
             .surface = surface,
         };
     }
 
     pub fn deinit(self: *Surface) void {
+        self.instance.instance_dispatch.destroySurfaceKHR(self.instance.instance, self.surface, null);
         self.* = undefined;
     }
 };
