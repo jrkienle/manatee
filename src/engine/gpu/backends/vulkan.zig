@@ -23,15 +23,15 @@ const BaseDispatch = vk.BaseWrapper(apis);
 const InstanceDispatch = vk.InstanceWrapper(apis);
 const DeviceDispatch = vk.DeviceWrapper(apis);
 
-pub const Instance = struct {
+pub const GpuInstance = struct {
     base_dispatch: BaseDispatch,
     instance: vk.Instance,
     instance_dispatch: InstanceDispatch,
     device: vk.Device,
     device_dispatch: DeviceDispatch,
+    surface: vk.SurfaceKHR,
 
-    pub fn init() !Instance {
-        // Before we go any further, let's load the Vulkan lib (this will crash if not available)
+    pub fn init(window: *windowing.Window) !GpuInstance {
         vulkan_lib = try std.DynLib.open(switch (builtin.target.os.tag) {
             .windows => "vulkan-1.dll",
             // TODO: I want to add Vulkan support to Mac and Linux in the future, but the MVP of
@@ -40,32 +40,29 @@ pub const Instance = struct {
             // .macos => "libvulkan.1.dylib",
             else => @compileError(std.fmt.comptimePrint("Unsupported OS: {}", .{builtin.os.tag})),
         });
-
-        // Create a proxy for the Vulkan lib
         const base_dispatch = try BaseDispatch.load(getInstanceProcAddress);
 
-        // Create the Vulkan instance
         const instance = try createInstance(base_dispatch);
-
-        // Create a proxy for the instance
         const instance_dispatch = try InstanceDispatch.load(instance, base_dispatch.dispatch.vkGetInstanceProcAddr);
 
-        const device = try createDevice(instance_dispatch, instance);
+        const surface = try createSurface(instance_dispatch, instance, window);
 
-        // Create a proxy for the device
+        const device = try createDevice(instance_dispatch, instance);
         const device_dispatch = try DeviceDispatch.load(device, instance_dispatch.dispatch.vkGetDeviceProcAddr);
 
-        return Instance{
+        return GpuInstance{
             .base_dispatch = base_dispatch,
             .instance = instance,
             .instance_dispatch = instance_dispatch,
             .device = device,
             .device_dispatch = device_dispatch,
+            .surface = surface,
         };
     }
 
-    pub fn deinit(self: *Instance) void {
+    pub fn deinit(self: *GpuInstance) void {
         self.device_dispatch.destroyDevice(self.device, null);
+        self.instance_dispatch.destroySurfaceKHR(self.instance, self.surface, null);
         self.instance_dispatch.destroyInstance(self.instance, null);
         vulkan_lib.close();
         self.* = undefined;
@@ -189,27 +186,13 @@ pub const Instance = struct {
 
         return device;
     }
-};
 
-pub const Surface = struct {
-    instance: *Instance,
-    surface: vk.SurfaceKHR,
-
-    pub fn init(instance: *Instance, window: windowing.Window) !Surface {
+    fn createSurface(instance_dispatch: InstanceDispatch, instance: vk.Instance, window: *windowing.Window) !vk.SurfaceKHR {
         const surface_create_info = vk.Win32SurfaceCreateInfoKHR{
             .hinstance = @ptrCast(window.hInstance),
             .hwnd = @ptrCast(window.hwnd),
         };
-        const surface = try instance.instance_dispatch.createWin32SurfaceKHR(instance.instance, &surface_create_info, null);
-
-        return Surface{
-            .instance = instance,
-            .surface = surface,
-        };
-    }
-
-    pub fn deinit(self: *Surface) void {
-        self.instance.instance_dispatch.destroySurfaceKHR(self.instance.instance, self.surface, null);
-        self.* = undefined;
+        const surface = try instance_dispatch.createWin32SurfaceKHR(instance, &surface_create_info, null);
+        return surface;
     }
 };
