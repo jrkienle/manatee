@@ -3,7 +3,7 @@ const std = @import("std");
 const manatee = @import("manatee");
 
 pub fn main() !void {
-    var game = manatee.Game.init();
+    var game = try manatee.game.Game.init();
     defer game.deinit();
-    _ = game.run();
+    _ = try game.run();
 }

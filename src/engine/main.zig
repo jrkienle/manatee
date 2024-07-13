@@ -1,2 +1,3 @@
-pub const Game = @import("./game/game.zig").Game;
-pub const Windowing = @import("./windowing/windowing.zig");
+pub const game = @import("./game/game.zig");
+pub const gpu = @import("./gpu/gpu.zig");
+pub const windowing = @import("./windowing/windowing.zig");
