@@ -4,5 +4,9 @@
   "[zig]": {
     "editor.defaultFormatter": "ziglang.vscode-zig",
     "editor.formatOnSave": true,
-  }
+  },
+  "zig.zls.debugLog": true,
+  "zig.zls.enableArgumentPlaceholders": false,
+  "zig.zls.enableInlayHints": false,
+  "zig.zls.warnStyle": true
 }
