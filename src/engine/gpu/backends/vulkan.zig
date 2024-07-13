@@ -18,9 +18,13 @@ const apis: []const vk.ApiInfo = &.{
     vk.extensions.khr_win_32_surface,
 };
 
-// These structs are actually just typings used to generate the actual instances in Instance.init()
+// These structs are actually just typings which blew my mind when first trying to understand the
+// Vulkan Zig library and Zig itself. They effectively map the above APIs to the base Vulkan
+// typings so we can get smarter autocomplete and compilation with Vulkan
 const BaseDispatch = vk.BaseWrapper(apis);
+const Instance = vk.InstanceProxy(apis);
 const InstanceDispatch = vk.InstanceWrapper(apis);
+const Device = vk.DeviceProxy(apis);
 const DeviceDispatch = vk.DeviceWrapper(apis);
 const DeviceCandidate = struct {
     physical_device: vk.PhysicalDevice,
@@ -30,11 +34,13 @@ const DeviceCandidate = struct {
 };
 
 pub const GpuInstance = struct {
-    base_dispatch: BaseDispatch,
-    instance: vk.Instance,
-    instance_dispatch: InstanceDispatch,
-    device: vk.Device,
-    device_dispatch: DeviceDispatch,
+    // I'm not sure if I need to include the dispatches in the final instance struct, so I'm
+    // commenting them out for now and before v0.1 I'll remove the comments if they're still unused
+    // base_dispatch: BaseDispatch,
+    instance: Instance,
+    // instance_dispatch: InstanceDispatch,
+    device: Device,
+    // device_dispatch: DeviceDispatch,
     queue_graphics: vk.Queue,
     queue_present: vk.Queue,
     surface: vk.SurfaceKHR,
@@ -50,24 +56,26 @@ pub const GpuInstance = struct {
         });
         const base_dispatch = try BaseDispatch.load(getInstanceProcAddress);
 
-        const instance = try createInstance(base_dispatch);
-        const instance_dispatch = try InstanceDispatch.load(instance, base_dispatch.dispatch.vkGetInstanceProcAddr);
+        const instance_handle = try createInstanceHandle(base_dispatch);
+        var instance_dispatch = try InstanceDispatch.load(instance_handle, base_dispatch.dispatch.vkGetInstanceProcAddr);
+        const instance = createInstance(instance_handle, &instance_dispatch);
 
-        const surface = try createSurface(instance_dispatch, instance, window);
+        const surface = try createSurface(instance, window);
 
-        const best_physical_device = try pickPhysicalDevices(instance_dispatch, instance, surface);
-        const device = try createDevice(instance_dispatch, best_physical_device);
-        const device_dispatch = try DeviceDispatch.load(device, instance_dispatch.dispatch.vkGetDeviceProcAddr);
+        const best_physical_device = try pickPhysicalDevices(instance, surface);
+        const device_handle = try createDeviceHandle(instance, best_physical_device);
+        var device_dispatch = try DeviceDispatch.load(device_handle, instance_dispatch.dispatch.vkGetDeviceProcAddr);
+        const device = createDevice(device_handle, &device_dispatch);
 
-        const queue_graphics = device_dispatch.getDeviceQueue(device, best_physical_device.queue_index_graphics, 0);
-        const queue_present = device_dispatch.getDeviceQueue(device, best_physical_device.queue_index_present, 0);
+        const queue_graphics = device.getDeviceQueue(best_physical_device.queue_index_graphics, 0);
+        const queue_present = device.getDeviceQueue(best_physical_device.queue_index_present, 0);
 
         return GpuInstance{
-            .base_dispatch = base_dispatch,
+            // .base_dispatch = base_dispatch,
             .instance = instance,
-            .instance_dispatch = instance_dispatch,
+            // .instance_dispatch = instance_dispatch,
             .device = device,
-            .device_dispatch = device_dispatch,
+            // .device_dispatch = device_dispatch,
             .queue_graphics = queue_graphics,
             .queue_present = queue_present,
             .surface = surface,
@@ -75,14 +83,20 @@ pub const GpuInstance = struct {
     }
 
     pub fn deinit(self: *GpuInstance) void {
-        self.device_dispatch.destroyDevice(self.device, null);
-        self.instance_dispatch.destroySurfaceKHR(self.instance, self.surface, null);
-        self.instance_dispatch.destroyInstance(self.instance, null);
+        // This may seem obvious, but things are intentially destroyed in the opposite order of
+        // their creation
+        self.device.destroyDevice(null);
+        self.instance.destroySurfaceKHR(self.surface, null);
+        self.instance.destroyInstance(null);
         vulkan_lib.close();
         self.* = undefined;
     }
 
-    fn createInstance(base_dispatch: BaseDispatch) !vk.Instance {
+    fn createInstance(instance_handle: vk.Instance, instance_dispatch: *InstanceDispatch) Instance {
+        return Instance.init(instance_handle, instance_dispatch);
+    }
+
+    fn createInstanceHandle(base_dispatch: BaseDispatch) !vk.Instance {
         // Create a Vulkan instance
         const application_info = vk.ApplicationInfo{
             .p_application_name = "Manatee Game",
@@ -102,11 +116,15 @@ pub const GpuInstance = struct {
             .enabled_extension_count = instance_extensions.len,
             .pp_enabled_extension_names = @ptrCast(&instance_extensions),
         };
-        const instance = try base_dispatch.createInstance(&instance_create_info, null);
-        return instance;
+        const instance_handle = try base_dispatch.createInstance(&instance_create_info, null);
+        return instance_handle;
     }
 
-    fn createDevice(instance_dispatch: InstanceDispatch, best_physical_device: DeviceCandidate) !vk.Device {
+    fn createDevice(device_handle: vk.Device, device_dispatch: *DeviceDispatch) Device {
+        return Device.init(device_handle, device_dispatch);
+    }
+
+    fn createDeviceHandle(instance: Instance, best_physical_device: DeviceCandidate) !vk.Device {
         const priority = [_]f32{1};
         const device_queue_create_infos = &[_]vk.DeviceQueueCreateInfo{
             .{
@@ -135,17 +153,17 @@ pub const GpuInstance = struct {
         };
 
         // FINALLY I can create the actual device (Vulkan is so fucking verbose)
-        const device = try instance_dispatch.createDevice(best_physical_device.physical_device, &device_create_info, null);
+        const device_handle = try instance.createDevice(best_physical_device.physical_device, &device_create_info, null);
 
-        return device;
+        return device_handle;
     }
 
-    fn createSurface(instance_dispatch: InstanceDispatch, instance: vk.Instance, window: *windowing.Window) !vk.SurfaceKHR {
+    fn createSurface(instance: Instance, window: *windowing.Window) !vk.SurfaceKHR {
         const surface_create_info = vk.Win32SurfaceCreateInfoKHR{
             .hinstance = @ptrCast(window.hInstance),
             .hwnd = @ptrCast(window.hwnd),
         };
-        const surface = try instance_dispatch.createWin32SurfaceKHR(instance, &surface_create_info, null);
+        const surface = try instance.createWin32SurfaceKHR(&surface_create_info, null);
         return surface;
     }
 
@@ -155,7 +173,7 @@ pub const GpuInstance = struct {
         return vulkan_lib.lookup(vk.PfnVoidFunction, name) orelse null;
     }
 
-    fn pickPhysicalDevices(instance_dispatch: InstanceDispatch, instance: vk.Instance, surface: vk.SurfaceKHR) !DeviceCandidate {
+    fn pickPhysicalDevices(instance: Instance, surface: vk.SurfaceKHR) !DeviceCandidate {
         // In order to select the best device to render graphics with, we first need to iterate
         // over all of the user's physical devices and see what we have available. This is really
         // unintuitive both in Vulkan and Zig. Effectively, we need to do the following:
@@ -172,7 +190,7 @@ pub const GpuInstance = struct {
 
         // Now it's time to count the machine's physical devices
         var physical_devices_count: u32 = 0;
-        _ = try instance_dispatch.enumeratePhysicalDevices(instance, &physical_devices_count, null);
+        _ = try instance.enumeratePhysicalDevices(&physical_devices_count, null);
 
         // If the user somehow doesn't have any physical devices, uhh, crash I guess
         if (physical_devices_count == 0) {
@@ -182,7 +200,7 @@ pub const GpuInstance = struct {
         // Time to allocate an empty array for these devices and then, using its pointer, fill it
         var physical_devices = try allocator.alloc(vk.PhysicalDevice, physical_devices_count);
         defer allocator.free(physical_devices);
-        _ = try instance_dispatch.enumeratePhysicalDevices(instance, &physical_devices_count, physical_devices.ptr);
+        _ = try instance.enumeratePhysicalDevices(&physical_devices_count, physical_devices.ptr);
 
         // One step closer! Now we need to iterate over all of these devices and give them a score
         var best_physical_device: ?vk.PhysicalDevice = null;
@@ -190,8 +208,8 @@ pub const GpuInstance = struct {
 
         // Time to iterate and pick that lucky device!
         for (physical_devices[0..physical_devices_count]) |physical_device| {
-            const physical_properties = instance_dispatch.getPhysicalDeviceProperties(physical_device);
-            const features = instance_dispatch.getPhysicalDeviceFeatures(physical_device);
+            const physical_properties = instance.getPhysicalDeviceProperties(physical_device);
+            const features = instance.getPhysicalDeviceFeatures(physical_device);
 
             // We'll start things off low with a score of 0
             var current_score: u32 = 0;
@@ -233,7 +251,7 @@ pub const GpuInstance = struct {
         // defer before destroying our previous allocator, so we can reuse that one
 
         var queue_family_property_count: u32 = 0;
-        instance_dispatch.getPhysicalDeviceQueueFamilyProperties(best_physical_device.?, &queue_family_property_count, null);
+        instance.getPhysicalDeviceQueueFamilyProperties(best_physical_device.?, &queue_family_property_count, null);
 
         // If the devoce somehow doesn't have any queue families, uhh, crash I guess. I probably
         // need to add some better error handling into here, there's a lot of happy path
@@ -244,7 +262,7 @@ pub const GpuInstance = struct {
         // Yay, more array allocation (I'm scared of memory yet using Zig)
         const queue_family_properties = try allocator.alloc(vk.QueueFamilyProperties, queue_family_property_count);
         defer allocator.free(queue_family_properties);
-        instance_dispatch.getPhysicalDeviceQueueFamilyProperties(best_physical_device.?, &queue_family_property_count, queue_family_properties.ptr);
+        instance.getPhysicalDeviceQueueFamilyProperties(best_physical_device.?, &queue_family_property_count, queue_family_properties.ptr);
 
         // Now remember, we need to fetch two different (or potentially the same, but with separate
         // variables) queue indexes here, let's set up our variables
@@ -262,7 +280,7 @@ pub const GpuInstance = struct {
             }
 
             // If we haven't already picked a present index and this one is suitable, set it!
-            if (queue_index_present == null and (try instance_dispatch.getPhysicalDeviceSurfaceSupportKHR(best_physical_device.?, family_index, surface)) == vk.TRUE) {
+            if (queue_index_present == null and (try instance.getPhysicalDeviceSurfaceSupportKHR(best_physical_device.?, family_index, surface)) == vk.TRUE) {
                 queue_index_present = family_index;
             }
         }
@@ -270,7 +288,7 @@ pub const GpuInstance = struct {
         // That was a long-ass function, FINALLY we can return our device candidate and its queues
         return DeviceCandidate{
             .physical_device = best_physical_device.?,
-            .physical_properties = instance_dispatch.getPhysicalDeviceProperties(best_physical_device.?),
+            .physical_properties = instance.getPhysicalDeviceProperties(best_physical_device.?),
             .queue_index_graphics = queue_index_graphics.?,
             .queue_index_present = queue_index_present.?,
         };
