@@ -15,6 +15,7 @@ const apis: []const vk.ApiInfo = &.{
     vk.features.version_1_2,
     vk.features.version_1_3,
     vk.extensions.khr_surface,
+    vk.extensions.khr_swapchain,
     vk.extensions.khr_win_32_surface,
 };
 
@@ -158,10 +159,13 @@ pub const GpuInstance = struct {
             queue_create_info_count = 1;
         }
 
+        var device_extensions = [_][*:0]const u8{
+            vk.extensions.khr_swapchain.name,
+        };
+
         var device_create_info = vk.DeviceCreateInfo{
-            // TODO: Do I need device extensions?
-            // .enabled_extension_count = device_extensions.len,
-            // .pp_enabled_extension_names = device_extensions_arr.slice().ptr,
+            .enabled_extension_count = device_extensions.len,
+            .pp_enabled_extension_names = @ptrCast(&device_extensions),
             .queue_create_info_count = queue_create_info_count,
             .p_queue_create_infos = device_queue_create_infos,
         };
@@ -290,14 +294,85 @@ pub const Queue = struct {
 // This should probably go in the main GPUInstance for the best multi backend experience, but the
 // Vulkan Zig example I'm following has it separate so I'll also keep it separate for now
 pub const Swapchain = struct {
-    gpu_instance: *GpuInstance,
-    pub fn init(gpu_instance: *GpuInstance) !Swapchain {
+    swapchain: vk.SwapchainKHR,
+    pub fn init(gpu_instance: *GpuInstance, allocator: std.mem.Allocator) !Swapchain {
+        // Aight so I'm gonna be honest, all of these values are things I'm grabbing from various
+        // Vulkan tutorials, and I have no idea what these individually do. I'll need to do a
+        // little research and probably fine-tune these values sooner than later
+        const surface_capabilities = try gpu_instance.instance.getPhysicalDeviceSurfaceCapabilitiesKHR(gpu_instance.physical_device, gpu_instance.surface);
+
+        var min_image_count: u32 = surface_capabilities.min_image_count + 1;
+        if (min_image_count > surface_capabilities.max_image_count) {
+            min_image_count = surface_capabilities.max_image_count;
+        }
+
+        // TODO: These values should be based off of the surface's width and height rather than
+        // the maximums. I'll need to pass the window width / height somewhere into the GPU context
+        // since I can't just pull them from the surface... for some reason
+        const image_extent = vk.Extent2D{
+            .height = surface_capabilities.max_image_extent.height,
+            .width = surface_capabilities.max_image_extent.width,
+        };
+
+        const surface_format = vk.SurfaceFormatKHR{
+            .format = .b8g8r8a8_srgb,
+            .color_space = .srgb_nonlinear_khr,
+        };
+
+        const image_usage = vk.ImageUsageFlags{
+            .color_attachment_bit = true,
+            .transfer_dst_bit = true,
+        };
+
+        var sharing_mode: vk.SharingMode = .exclusive;
+        if (gpu_instance.queue_graphics.queue_family == gpu_instance.queue_present.queue_family) {
+            sharing_mode = .concurrent;
+        }
+
+        const qfi = [_]u32{ gpu_instance.queue_graphics.queue_family, gpu_instance.queue_present.queue_family };
+
+        const present_mode = try getPresentMode(gpu_instance, allocator);
+
+        const swapchain_create_info = vk.SwapchainCreateInfoKHR{
+            .surface = gpu_instance.surface,
+            .min_image_count = surface_capabilities.min_image_count,
+            .image_format = surface_format.format,
+            .image_color_space = surface_format.color_space,
+            .image_extent = image_extent,
+            .image_array_layers = 1,
+            .image_usage = image_usage,
+            .image_sharing_mode = sharing_mode,
+            .queue_family_index_count = qfi.len,
+            .pre_transform = surface_capabilities.current_transform,
+            .composite_alpha = .{ .opaque_bit_khr = true },
+            .present_mode = present_mode,
+            .clipped = vk.TRUE,
+        };
+
+        const swapchain = try gpu_instance.device.createSwapchainKHR(&swapchain_create_info, null);
         return Swapchain{
-            .gpu_instance = gpu_instance,
+            .swapchain = swapchain,
         };
     }
 
     pub fn deinit(self: *Swapchain) void {
         self.* = undefined;
+    }
+
+    fn getPresentMode(gpu_instance: *GpuInstance, allocator: std.mem.Allocator) !vk.PresentModeKHR {
+        const present_modes = try gpu_instance.instance.getPhysicalDeviceSurfacePresentModesAllocKHR(gpu_instance.physical_device, gpu_instance.surface, allocator);
+
+        const preferred = [_]vk.PresentModeKHR{
+            .mailbox_khr,
+            .immediate_khr,
+        };
+
+        for (preferred) |mode| {
+            if (std.mem.indexOfScalar(vk.PresentModeKHR, present_modes, mode) != null) {
+                return mode;
+            }
+        }
+
+        return .fifo_khr;
     }
 };
