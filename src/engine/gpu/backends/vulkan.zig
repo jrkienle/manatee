@@ -34,18 +34,20 @@ const DeviceCandidate = struct {
 };
 
 pub const GpuInstance = struct {
+    allocator: std.mem.Allocator,
     // I'm not sure if I need to include the dispatches in the final instance struct, so I'm
     // commenting them out for now and before v0.1 I'll remove the comments if they're still unused
     // base_dispatch: BaseDispatch,
     instance: Instance,
     // instance_dispatch: InstanceDispatch,
     device: Device,
+    physical_device: vk.PhysicalDevice,
     // device_dispatch: DeviceDispatch,
-    queue_graphics: vk.Queue,
-    queue_present: vk.Queue,
+    queue_graphics: Queue,
+    queue_present: Queue,
     surface: vk.SurfaceKHR,
 
-    pub fn init(window: *windowing.Window) !GpuInstance {
+    pub fn init(window: *windowing.Window, allocator: std.mem.Allocator) !GpuInstance {
         vulkan_lib = try std.DynLib.open(switch (builtin.target.os.tag) {
             .windows => "vulkan-1.dll",
             // TODO: I want to add Vulkan support to Mac and Linux in the future, but the MVP of
@@ -57,24 +59,33 @@ pub const GpuInstance = struct {
         const base_dispatch = try BaseDispatch.load(getInstanceProcAddress);
 
         const instance_handle = try createInstanceHandle(base_dispatch);
-        var instance_dispatch = try InstanceDispatch.load(instance_handle, base_dispatch.dispatch.vkGetInstanceProcAddr);
-        const instance = createInstance(instance_handle, &instance_dispatch);
+        const instance_dispatch = try allocator.create(InstanceDispatch);
+        errdefer allocator.destroy(instance_dispatch);
+        instance_dispatch.* = try InstanceDispatch.load(instance_handle, base_dispatch.dispatch.vkGetInstanceProcAddr);
+        const instance = createInstance(instance_handle, instance_dispatch);
+        errdefer instance.destroyInstance(null);
 
         const surface = try createSurface(instance, window);
+        errdefer instance.destroySurfaceKHR(surface, null);
 
-        const best_physical_device = try pickPhysicalDevices(instance, surface);
+        const best_physical_device = try pickPhysicalDevices(instance, surface, allocator);
         const device_handle = try createDeviceHandle(instance, best_physical_device);
-        var device_dispatch = try DeviceDispatch.load(device_handle, instance_dispatch.dispatch.vkGetDeviceProcAddr);
-        const device = createDevice(device_handle, &device_dispatch);
+        const device_dispatch = try allocator.create(DeviceDispatch);
+        errdefer allocator.destroy(device_dispatch);
+        device_dispatch.* = try DeviceDispatch.load(device_handle, instance_dispatch.dispatch.vkGetDeviceProcAddr);
+        const device = createDevice(device_handle, device_dispatch);
+        errdefer device.destroyDevice(null);
 
         const queue_graphics = device.getDeviceQueue(best_physical_device.queue_index_graphics, 0);
         const queue_present = device.getDeviceQueue(best_physical_device.queue_index_present, 0);
 
         return GpuInstance{
+            .allocator = allocator,
             // .base_dispatch = base_dispatch,
             .instance = instance,
             // .instance_dispatch = instance_dispatch,
             .device = device,
+            .physical_device = best_physical_device.physical_device,
             // .device_dispatch = device_dispatch,
             .queue_graphics = queue_graphics,
             .queue_present = queue_present,
@@ -88,6 +99,9 @@ pub const GpuInstance = struct {
         self.device.destroyDevice(null);
         self.instance.destroySurfaceKHR(self.surface, null);
         self.instance.destroyInstance(null);
+
+        self.allocator.destroy(self.device.wrapper);
+        self.allocator.destroy(self.instance.wrapper);
         vulkan_lib.close();
         self.* = undefined;
     }
@@ -173,41 +187,21 @@ pub const GpuInstance = struct {
         return vulkan_lib.lookup(vk.PfnVoidFunction, name) orelse null;
     }
 
-    fn pickPhysicalDevices(instance: Instance, surface: vk.SurfaceKHR) !DeviceCandidate {
-        // In order to select the best device to render graphics with, we first need to iterate
-        // over all of the user's physical devices and see what we have available. This is really
-        // unintuitive both in Vulkan and Zig. Effectively, we need to do the following:
-        // 1. Count how many physical devices the machine has
-        // 2. Use an allocator to create an empty array to store references to those devices
-        // 3. Iterate over the devices and give each of them a score
-        // 4. Return the device with the highest score
-
-        // The first step is to create an allocator, for this one I'll be using a general purpose
-        // allocator because that's what every piece of example code I've seen uses
-        var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-        defer _ = gpa.deinit();
-        const allocator = gpa.allocator();
-
-        // Now it's time to count the machine's physical devices
-        var physical_devices_count: u32 = 0;
-        _ = try instance.enumeratePhysicalDevices(&physical_devices_count, null);
+    fn pickPhysicalDevices(instance: Instance, surface: vk.SurfaceKHR, allocator: std.mem.Allocator) !DeviceCandidate {
+        // Get all physical devices
+        var physical_devices = try instance.enumeratePhysicalDevicesAlloc(allocator);
 
         // If the user somehow doesn't have any physical devices, uhh, crash I guess
-        if (physical_devices_count == 0) {
+        if (physical_devices.len == 0) {
             return error.NoPhysicalDevices;
         }
-
-        // Time to allocate an empty array for these devices and then, using its pointer, fill it
-        var physical_devices = try allocator.alloc(vk.PhysicalDevice, physical_devices_count);
-        defer allocator.free(physical_devices);
-        _ = try instance.enumeratePhysicalDevices(&physical_devices_count, physical_devices.ptr);
 
         // One step closer! Now we need to iterate over all of these devices and give them a score
         var best_physical_device: ?vk.PhysicalDevice = null;
         var best_physical_device_score: u32 = 0;
 
         // Time to iterate and pick that lucky device!
-        for (physical_devices[0..physical_devices_count]) |physical_device| {
+        for (physical_devices[0..physical_devices.len]) |physical_device| {
             const physical_properties = instance.getPhysicalDeviceProperties(physical_device);
             const features = instance.getPhysicalDeviceFeatures(physical_device);
 
@@ -246,23 +240,9 @@ pub const GpuInstance = struct {
         // Alrighty, we have the best possible Physical device, yay! We're unfortunately not done
         // iterating over device related things yet. We now need to iterate over the device's
         // queues so we can grab two queue indexes: one for rendering actual graphics, and one for
-        // rendering frames to a window (read: surface). These steps will look shockingly familiar
-        // to picking the best device, and yes, they start with an allocator. Luckily we slapped a
-        // defer before destroying our previous allocator, so we can reuse that one
+        // rendering frames to a window (read: surface)
 
-        var queue_family_property_count: u32 = 0;
-        instance.getPhysicalDeviceQueueFamilyProperties(best_physical_device.?, &queue_family_property_count, null);
-
-        // If the devoce somehow doesn't have any queue families, uhh, crash I guess. I probably
-        // need to add some better error handling into here, there's a lot of happy path
-        if (physical_devices_count == 0) {
-            return error.NoQueueFamilies;
-        }
-
-        // Yay, more array allocation (I'm scared of memory yet using Zig)
-        const queue_family_properties = try allocator.alloc(vk.QueueFamilyProperties, queue_family_property_count);
-        defer allocator.free(queue_family_properties);
-        instance.getPhysicalDeviceQueueFamilyProperties(best_physical_device.?, &queue_family_property_count, queue_family_properties.ptr);
+        const queue_family_properties = try instance.getPhysicalDeviceQueueFamilyPropertiesAlloc(best_physical_device.?, allocator);
 
         // Now remember, we need to fetch two different (or potentially the same, but with separate
         // variables) queue indexes here, let's set up our variables

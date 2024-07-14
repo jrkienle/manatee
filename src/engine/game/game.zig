@@ -8,11 +8,11 @@ pub const Game = struct {
     main_window: windowing.Window,
     swapchain: gpu.Swapchain,
     window_manager: windowing.WindowManager,
-    pub fn init() !Game {
+    pub fn init(allocator: std.mem.Allocator) !Game {
         var window_manager = windowing.WindowManager.init();
         var main_window = windowing.Window.init(&window_manager);
-        var gpu_instance = try gpu.GpuInstance.init(&main_window);
-        const swapchain = try gpu.Swapchain.init(&gpu_instance);
+        var gpu_instance = try gpu.GpuInstance.init(&main_window, allocator);
+        const swapchain = try gpu.Swapchain.init(&gpu_instance, allocator);
 
         return Game{
             .gpu_instance = gpu_instance,
@@ -27,6 +27,7 @@ pub const Game = struct {
     }
 
     pub fn deinit(self: *Game) void {
+        self.swapchain.deinit();
         self.gpu_instance.deinit();
         self.main_window.deinit();
         self.window_manager.deinit();
