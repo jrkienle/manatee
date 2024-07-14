@@ -76,8 +76,8 @@ pub const GpuInstance = struct {
         const device = createDevice(device_handle, device_dispatch);
         errdefer device.destroyDevice(null);
 
-        const queue_graphics = device.getDeviceQueue(best_physical_device.queue_index_graphics, 0);
-        const queue_present = device.getDeviceQueue(best_physical_device.queue_index_present, 0);
+        const queue_graphics = Queue.init(device, best_physical_device.queue_index_graphics);
+        const queue_present = Queue.init(device, best_physical_device.queue_index_present);
 
         return GpuInstance{
             .allocator = allocator,
@@ -271,6 +271,18 @@ pub const GpuInstance = struct {
             .physical_properties = instance.getPhysicalDeviceProperties(best_physical_device.?),
             .queue_index_graphics = queue_index_graphics.?,
             .queue_index_present = queue_index_present.?,
+        };
+    }
+};
+
+pub const Queue = struct {
+    queue_handle: vk.Queue,
+    queue_family: u32,
+
+    fn init(device: Device, queue_family: u32) Queue {
+        return .{
+            .queue_handle = device.getDeviceQueue(queue_family, 0),
+            .queue_family = queue_family,
         };
     }
 };
