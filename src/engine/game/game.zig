@@ -5,6 +5,7 @@ const windowing = @import("../windowing/windowing.zig");
 
 pub const Game = struct {
     arena: std.heap.ArenaAllocator,
+    allocator: std.mem.Allocator,
     gpu_instance: gpu.GpuInstance,
     main_window: windowing.Window,
     swapchain: gpu.Swapchain,
@@ -13,7 +14,10 @@ pub const Game = struct {
         // Zig recommends game loops use an arean allocator, however Zig also recommends that when
         // creating a library you allow developers to pass in their own allocators. Because I'm
         // generous and very cool, Manatee allows devs to optionally pass in their own, but creates
-        // an arena allocator for those that don't want to use their own
+        // an arena allocator for those that don't want to use their own. Note that this allocator
+        // will be created and passed into the game struct regardless of whether or not a custom
+        // allocator is passed in, this is done so that Manatee doesn't have to guess wherher or
+        // not to deinit the allocator during the Game's deinit function
         var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
         const allocator_or_default: std.mem.Allocator = allocator orelse arena.allocator();
 
@@ -23,6 +27,7 @@ pub const Game = struct {
         const swapchain = try gpu.Swapchain.init(&gpu_instance, allocator_or_default);
 
         return Game{
+            .allocator = allocator_or_default,
             .arena = arena,
             .gpu_instance = gpu_instance,
             .main_window = main_window,
