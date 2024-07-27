@@ -36,14 +36,9 @@ const DeviceCandidate = struct {
 
 pub const GpuInstance = struct {
     allocator: std.mem.Allocator,
-    // I'm not sure if I need to include the dispatches in the final instance struct, so I'm
-    // commenting them out for now and before v0.1 I'll remove the comments if they're still unused
-    // base_dispatch: BaseDispatch,
-    instance: Instance,
-    // instance_dispatch: InstanceDispatch,
     device: Device,
+    instance: Instance,
     physical_device: vk.PhysicalDevice,
-    // device_dispatch: DeviceDispatch,
     queue_graphics: Queue,
     queue_present: Queue,
     surface: vk.SurfaceKHR,
@@ -294,16 +289,20 @@ pub const Queue = struct {
 // This should probably go in the main GPUInstance for the best multi backend experience, but the
 // Vulkan Zig example I'm following has it separate so I'll also keep it separate for now
 pub const Swapchain = struct {
+    extent: vk.Extent2D,
+    gpu_instance: *GpuInstance,
+    surface_format: vk.SurfaceFormatKHR,
     swapchain: vk.SwapchainKHR,
+    swapchain_images: []vk.Image,
     pub fn init(gpu_instance: *GpuInstance, allocator: std.mem.Allocator) !Swapchain {
         // Aight so I'm gonna be honest, all of these values are things I'm grabbing from various
         // Vulkan tutorials, and I have no idea what these individually do. I'll need to do a
         // little research and probably fine-tune these values sooner than later
         const surface_capabilities = try gpu_instance.instance.getPhysicalDeviceSurfaceCapabilitiesKHR(gpu_instance.physical_device, gpu_instance.surface);
 
-        var min_image_count: u32 = surface_capabilities.min_image_count + 1;
-        if (min_image_count > surface_capabilities.max_image_count) {
-            min_image_count = surface_capabilities.max_image_count;
+        var image_count: u32 = surface_capabilities.min_image_count + 1;
+        if (image_count > surface_capabilities.max_image_count) {
+            image_count = surface_capabilities.max_image_count;
         }
 
         // TODO: These values should be based off of the surface's width and height rather than
@@ -335,7 +334,7 @@ pub const Swapchain = struct {
 
         const swapchain_create_info = vk.SwapchainCreateInfoKHR{
             .surface = gpu_instance.surface,
-            .min_image_count = surface_capabilities.min_image_count,
+            .min_image_count = image_count,
             .image_format = surface_format.format,
             .image_color_space = surface_format.color_space,
             .image_extent = image_extent,
@@ -350,12 +349,19 @@ pub const Swapchain = struct {
         };
 
         const swapchain = try gpu_instance.device.createSwapchainKHR(&swapchain_create_info, null);
+
+        const swapchain_images = try gpu_instance.device.getSwapchainImagesAllocKHR(swapchain, allocator);
         return Swapchain{
+            .extent = image_extent,
+            .gpu_instance = gpu_instance,
+            .surface_format = surface_format,
             .swapchain = swapchain,
+            .swapchain_images = swapchain_images,
         };
     }
 
     pub fn deinit(self: *Swapchain) void {
+        self.gpu_instance.device.destroySwapchainKHR(self.swapchain, null);
         self.* = undefined;
     }
 

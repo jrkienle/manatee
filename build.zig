@@ -1,5 +1,7 @@
 const std = @import("std");
 
+const ShaderCompileStep = @import("vulkan-zig").ShaderCompileStep;
+
 pub fn build(b: *std.Build) void {
     // Sets up the default settings for the build script
     const target = b.standardTargetOptions(.{});
@@ -39,12 +41,23 @@ pub fn build(b: *std.Build) void {
             // vulkan-zig requires
             const registry = b.dependency("vulkan-headers", .{}).path("registry/vk.xml");
             const vk_gen = b.dependency("vulkan-zig", .{}).artifact("vulkan-zig-generator");
+
             const vk_generate_cmd = b.addRunArtifact(vk_gen);
             vk_generate_cmd.addFileArg(registry);
             const vulkan_zig = b.addModule("vulkan-zig", .{
                 .root_source_file = vk_generate_cmd.addOutputFileArg("vk.zig"),
             });
             engine_module.addImport("vulkan", vulkan_zig);
+
+            // TODO: How the FUCK do I make shaders work for devs using the engine
+            const shaders = ShaderCompileStep.create(
+                b,
+                &[_][]const u8{ "glslc", "--target-env=vulkan1.2" },
+                "-o",
+            );
+            shaders.add("triangle_vert", "shaders/triangle.vert", .{});
+            shaders.add("triangle_frag", "shaders/triangle.frag", .{});
+            engine_module.addImport("shaders", shaders.getModule());
 
             // For some reason ZLS autocomplete stops working when editor_exe doesn't have
             // engine_module's imports also added to it. There's probably a way to fix this but I
